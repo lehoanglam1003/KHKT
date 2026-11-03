@@ -4,3 +4,4 @@ python-dotenv
 groq
 gunicorn
 google-genai
+requests
