@@ -1069,9 +1069,9 @@
         <div class="input-wrapper">
             <textarea id="userInput" placeholder="Nhập hoặc nhấn mic để nói..."></textarea>
             
-            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event)">
             
-            <button class="mic-btn" id="imgBtn" style="right: 52px;" onclick="document.getElementById('imageInput').click()" title="Tải ảnh màn hình">
+            <button class="mic-btn" id="imgBtn" style="right: 52px;" onclick="document.getElementById('imageInput').click()" title="Chụp hoặc tải ảnh">
                 <i class="fa-solid fa-image"></i>
             </button>
 
@@ -2018,9 +2018,12 @@ function speakText(inputData) {
             const brakeAction = savedDiaryEntry
                 ? `<button class="speak-btn" style="background:#B91C1C;" onclick="openEmergencyBrake('${savedDiaryEntry.id}')"><i class="fa-solid fa-hand"></i> DỪNG LẠI, XỬ LÝ TỪNG BƯỚC</button>`
                 : "";
-            let replyFormatted = (data.reply || "").replace(/\n/g, '<br>');
-            let encodedReply = encodeURIComponent(data.reply || "");
-            let alertLevel = (data.alert_level || "green").toLowerCase();
+            let replyFormatted = (data.reply || data.error || "Chưa có nội dung trả lời.")
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
+            let encodedReply = encodeURIComponent(data.reply || data.error || "")
+                .replace(/[!'()*]/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+            let alertLevel = (data.alert_level || "orange").toLowerCase();
 
             let alertBox = "";
 
@@ -2531,17 +2534,51 @@ async function sendAlertBySms(level, encodedAdvice) {
         return `${hours}:${minutes}`;
     }
 
+    async function prepareImage(file) {
+        if (file.size > 15 * 1024 * 1024) {
+            throw new Error("Ảnh quá lớn. Cụ hãy chọn ảnh dưới 15 MB nhé.");
+        }
+
+        if (window.createImageBitmap) {
+            try {
+                const bitmap = await createImageBitmap(file);
+                const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                bitmap.close();
+                return canvas.toDataURL("image/jpeg", 0.84);
+            } catch (error) {
+                console.warn("Không thể nén ảnh trên thiết bị:", error);
+            }
+        }
+
+        if (file.size > 8 * 1024 * 1024) {
+            throw new Error("Không thể nén ảnh này trên thiết bị. Cụ hãy chọn ảnh JPG/PNG nhỏ hơn 8 MB.");
+        }
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Không đọc được ảnh. Cụ hãy thử chọn lại nhé."));
+            reader.readAsDataURL(file);
+        });
+    }
+
     /* HÀM XỬ LÝ TẢI VÀ GỬI ẢNH CHÍNH */
-    function handleImageUpload(event) {
+    async function handleImageUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
+        event.target.value = '';
 
         const chatBody = document.getElementById('chatBody');
-
-        // 1. Đọc file ảnh dưới dạng DataURL (Base64)
-        const reader = new FileReader();
-        reader.onload = async function (e) {
-            const base64Image = e.target.result;
+        let base64Image;
+        try {
+            base64Image = await prepareImage(file);
+        } catch (error) {
+            alert(error.message || "Không thể đọc ảnh này.");
+            return;
+        }
 
             // 2. Hiển thị tin nhắn ảnh của người dùng (Chuẩn cấu trúc guianh.html)
             const userRow = document.createElement('div');
@@ -2575,13 +2612,17 @@ async function sendAlertBySms(level, encodedAdvice) {
                 });
 
                 const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Chưa thể phân tích ảnh lúc này.");
                 const savedDiaryEntry = await saveDiaryEntry(data.source_text || "Phân tích từ ảnh (không trích xuất được nội dung).", data);
                 const brakeAction = savedDiaryEntry
                     ? `<button class="speak-btn" style="background:#B91C1C;" onclick="openEmergencyBrake('${savedDiaryEntry.id}')"><i class="fa-solid fa-hand"></i> DỪNG LẠI, XỬ LÝ TỪNG BƯỚC</button>`
                     : "";
-                let replyFormatted = (data.reply || "").replace(/\n/g, '<br>');
-                let encodedReply = encodeURIComponent(data.reply || "");
-                let alertLevel = (data.alert_level || "green").toLowerCase();
+                let replyFormatted = (data.reply || "")
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+                let encodedReply = encodeURIComponent(data.reply || "")
+                    .replace(/[!'()*]/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+                let alertLevel = (data.alert_level || "orange").toLowerCase();
 
                 let alertBox = "";
 
@@ -2647,17 +2688,9 @@ async function sendAlertBySms(level, encodedAdvice) {
             
             } catch (error) {
                 console.error("Lỗi gửi ảnh:", error);
-                loadingDiv.innerHTML = `
-                    <div class="alert-card alert-danger">
-                        <i class="fa-solid fa-wifi"></i> Không thể phân tích ảnh lúc này. Cụ tuyệt đối KHÔNG chuyển tiền nhé!
-                    </div>
-                `;
+                loadingDiv.textContent = error.message || "Không thể phân tích ảnh lúc này. Cụ hãy thử lại sau nhé.";
             }
             chatBody.scrollTop = chatBody.scrollHeight;
-        };
-
-        reader.readAsDataURL(file);
-        event.target.value = ''; // Reset input để có thể chọn lại cùng 1 ảnh
     }
     /* 8. HỒ SƠ CỦA CỤ */
     function openProfile() {

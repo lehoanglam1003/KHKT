@@ -6,10 +6,22 @@
 
 ### Cấu hình phát triển
 
+Yêu cầu Python 3.11. Python 3.9 đã hết hỗ trợ.
+
+Tạo môi trường riêng cho dự án bằng Python 3.11:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
 1. Tạo một dịch vụ **Verify** trong Twilio Console, bật kênh SMS và kiểm tra quyền gửi đến Việt Nam. Tài khoản dùng thử của Twilio có thể giới hạn số nhận mã.
 2. Sao chép `.env.example` thành `.env`.
 3. Điền `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` và `TWILIO_VERIFY_SERVICE_SID` trong `.env`. Đặt `FLASK_SECRET_KEY` thành chuỗi ngẫu nhiên riêng; không chia sẻ hoặc đưa `.env` lên Git.
-4. Chạy ứng dụng bằng `python3 app.py`.
+4. Chạy ứng dụng bằng `python app.py` trong môi trường ảo đã kích hoạt.
+
+Phân tích ảnh cần `GEMINI_API_KEY`; có thể đổi model bằng `GEMINI_MODEL` (mặc định `gemini-2.5-flash`). Ảnh được thu nhỏ trên trình duyệt trước khi gửi; ảnh gốc tối đa 15 MB và dữ liệu gửi lên máy chủ tối đa 8 MB.
 
 Để bật tra cứu link, bật Google Safe Browsing Lookup API và điền `GOOGLE_SAFE_BROWSING_API_KEY`. Giới hạn key ở phía Google Cloud và chỉ dùng dịch vụ theo điều khoản hiện hành; Safe Browsing Lookup API dành cho mục đích phi thương mại. Khi tra cứu, toàn bộ URL (kể cả tham số truy vấn, nhưng bỏ phần fragment) được gửi tới Google; không tra các link riêng tư chứa mã truy cập. Kết quả không có cảnh báo không chứng minh link an toàn.
 

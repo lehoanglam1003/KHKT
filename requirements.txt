@@ -3,4 +3,4 @@ flask-cors
 python-dotenv
 groq
 gunicorn
-google-generativeai
+google-genai
