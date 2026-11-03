@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Trợ Lý An Toàn AI - Bảo Vệ Người Cao Tuổi</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Thư viện ResponsiveVoice API cho giọng đọc tiếng Việt -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
+
+    <style>
+        /* =========================================================
+           CSS CHUNG
+        ========================================================= */
+
+        :root {
+            --zalo-blue: #0068FF;
+            --zalo-dark: #0052CC;
+            --bg-gray: #F4F6F9;
+            --danger-color: #DC2626;
+            --safe-color: #16A34A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #1E293B;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .mobile-frame {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh;
+            max-height: 850px;
+            background: var(--bg-gray);
+            display: flex;
+            flex-direction: column;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 4px solid #334155;
+        }
+
+        .zalo-header {
+            background: linear-gradient(135deg, #0068FF, #0043A8);
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .sos-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        .security-banner {
+            background: #E0F2FE;
+            border-bottom: 1px solid #BAE6FD;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #0369A1;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--safe-color);
+            border-radius: 50%;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .message {
+            max-width: 88%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            line-height: 1.5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        .bot-msg {
+            background-color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            color: #1E293B;
+            border: 1px solid #E2E8F0;
+        }
+
+        .user-msg {
+            background-color: #0068FF;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .alert-card {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .alert-danger {
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+
+        .alert-safe {
+            background: #F0FDF4;
+            color: #166534;
+            border: 1px solid #86EFAC;
+        }
+
+        .alert-warning {
+            background: #FFF7ED;
+            color: #C2410C;
+            border: 1px solid #FDBA74;
+        }
+
+        .speak-btn {
+            background: #0068FF;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            margin-top: 6px;
+        }
+
+        .speak-btn:hover {
+            background: #0052CC;
+        }
+
+        .input-area {
+            background: white;
+            padding: 14px;
+            border-top: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .lookup-panel {
+            padding: 10px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            background: #F8FAFC;
+        }
+
+        .lookup-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+        }
+
+        .lookup-row input,
+        .lookup-row select {
+            min-width: 0;
+            height: 42px;
+            padding: 0 10px;
+            border: 1px solid #94A3B8;
+            border-radius: 6px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .lookup-button {
+            min-height: 42px;
+            padding: 0 12px;
+            border: 0;
+            border-radius: 6px;
+            background: #0F766E;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .lookup-note {
+            margin-top: 7px;
+            color: #475569;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .lookup-result:empty { display: none; }
+
+        .lookup-result {
+            margin-top: 9px;
+            padding-top: 8px;
+            border-top: 1px solid #E2E8F0;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .lookup-message { margin-bottom: 6px; }
+        .lookup-danger { color: #991B1B; font-weight: 700; }
+        .lookup-muted { color: #475569; }
+        .lookup-categories { margin: 5px 0 8px; padding-left: 20px; }
+        .lookup-report-actions { display: grid; gap: 7px; margin-top: 8px; }
+
+        @media (max-width: 360px) {
+            .lookup-row { grid-template-columns: 1fr; }
+            .lookup-button { width: 100%; }
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            height: 75px;
+            padding: 10px 85px 10px 12px;
+            border: 2px solid #CBD5E1;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--zalo-blue);
+        }
+
+        .mic-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 12px;
+            background: #E2E8F0;
+            color: #475569;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .mic-btn.recording {
+            background: var(--danger-color);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .send-btn {
+            background: var(--zalo-blue);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 104, 255, 0.3);
+        }
+
+        .send-btn:hover {
+            background: var(--zalo-dark);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* MÀN HÌNH ĐĂNG NHẬP */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0068FF, #0043A8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 380px;
+            background: white;
+            border-radius: 28px;
+            padding: 32px 26px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+
+        .login-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            background: #E0F2FE;
+            color: #0068FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+        }
+
+        .login-box h1 {
+            color: #0068FF;
+            font-size: 30px;
+            margin-bottom: 4px;
+        }
+
+        .login-subtitle {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1E293B;
+        }
+
+        .login-desc {
+            font-size: 14px;
+            color: #64748B;
+            margin: 8px 0 22px;
+        }
+
+        .login-box input {
+            width: 100%;
+            height: 52px;
+            margin-bottom: 12px;
+            padding: 0 15px;
+            border: 2px solid #CBD5E1;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .login-box input:focus {
+            border-color: #0068FF;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 52px;
+            border: none;
+            border-radius: 12px;
+            background: #0068FF;
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .login-btn:hover {
+            background: #0052CC;
+        }
+
+        .login-secondary-btn {
+            width: 100%;
+            min-height: 46px;
+            margin-top: 9px;
+            border: 1px solid #0068FF;
+            border-radius: 12px;
+            background: white;
+            color: #0052CC;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .login-otp-note {
+            display: none;
+            margin: 0 0 12px;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        #login-message {
+            margin-top: 12px;
+            color: #DC2626;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* HỘP HỒ SƠ */
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .profile-box {
+            width: 100%;
+            max-width: 380px;
+            background: white;
+            border-radius: 24px;
+            padding: 25px 22px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .profile-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #0068FF;
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .profile-desc {
+            color: #64748B;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .profile-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 7px;
+        }
+
+        .profile-input {
+            width: 100%;
+            height: 50px;
+            border: 2px solid #CBD5E1;
+            border-radius: 12px;
+            padding: 0 14px;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .profile-input:focus {
+            border-color: #0068FF;
+        }
+
+        .profile-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .profile-save-btn,
+        .profile-close-btn,
+        .profile-logout-btn {
+            height: 48px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .profile-save-btn,
+        .profile-close-btn { flex: 1; }
+
+        .profile-save-btn {
+            background: #0068FF;
+            color: white;
+        }
+
+        .profile-save-btn:hover { background: #0052CC; }
+
+        .profile-close-btn {
+            background: #E2E8F0;
+            color: #334155;
+        }
+
+        .profile-close-btn:hover { background: #CBD5E1; }
+
+        .profile-logout-btn {
+            width: 100%;
+            background: #FEF2F2;
+            color: #DC2626;
+            margin-top: 10px;
+            border: 1px solid #FCA5A5;
+        }
+
+        .profile-account {
+            background: #F0F9FF;
+            border: 1px solid #BAE6FD;
+            border-radius: 12px;
+            padding: 11px 13px;
+            margin-bottom: 18px;
+            color: #0369A1;
+            font-size: 14px;
+        }
+
+        .profile-account strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 16px;
+            color: #0F172A;
+        }
+
+        .brake-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 12000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.78);
+        }
+
+        .brake-panel {
+            width: min(100%, 520px);
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 18px;
+            border-radius: 12px;
+            background: #FFFFFF;
+            color: #1E293B;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .brake-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #B91C1C;
+            font-size: 21px;
+        }
+
+        .brake-caution {
+            padding: 12px;
+            border-left: 4px solid #DC2626;
+            background: #FEF2F2;
+            color: #7F1D1D;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .brake-limit-note {
+            margin: 8px 0 14px;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .brake-label {
+            display: block;
+            margin: 12px 0 6px;
+            font-weight: 700;
+        }
+
+        .brake-status-select {
+            width: 100%;
+            min-height: 48px;
+            padding: 8px 10px;
+            border: 1px solid #94A3B8;
+            border-radius: 6px;
+            background: #FFFFFF;
+            font-size: 16px;
+        }
+
+        .brake-next-step {
+            margin: 12px 0;
+            padding: 11px;
+            background: #FFF7ED;
+            border: 1px solid #FDBA74;
+            border-radius: 6px;
+            color: #7C2D12;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .brake-checklist label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 10px 0;
+            line-height: 1.45;
+            cursor: pointer;
+        }
+
+        .brake-checklist input {
+            flex: 0 0 22px;
+            width: 22px;
+            height: 22px;
+            margin: 0;
+            accent-color: #0F766E;
+        }
+
+        .brake-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .brake-button {
+            min-height: 48px;
+            padding: 9px;
+            border: 0;
+            border-radius: 6px;
+            background: #0F766E;
+            color: #FFFFFF;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .brake-button.primary { background: #B91C1C; }
+        .brake-button.secondary { background: #334155; }
+        .brake-button:disabled { opacity: 0.65; cursor: wait; }
+
+        @media (max-width: 380px) {
+            .brake-panel { padding: 14px; }
+            .brake-buttons { grid-template-columns: 1fr; }
+        }
+
+        .diary-toolbar {
+            background: white;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #334155;
+            font-size: 13px;
+        }
+
+        .diary-open-btn,
+        .diary-close-btn,
+        .diary-save-btn,
+        .diary-delete-btn,
+        .diary-clear-btn {
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+        }
+
+        .diary-open-btn {
+            color: #0052CC;
+            background: #EAF2FF;
+            border-radius: 8px;
+            padding: 8px 11px;
+        }
+
+        .diary-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 11000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.72);
+        }
+
+        .diary-panel {
+            display: flex;
+            flex-direction: column;
+            width: min(100%, 620px);
+            max-height: min(92vh, 900px);
+            background: #F8FAFC;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .diary-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            background: #0F766E;
+            color: white;
+        }
+
+        .diary-heading h2 {
+            font-size: 20px;
+        }
+
+        .diary-close-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            color: white;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 20px;
+        }
+
+        .diary-private-note {
+            padding: 10px 16px;
+            color: #475569;
+            font-size: 13px;
+            background: #ECFDF5;
+            border-bottom: 1px solid #D1FAE5;
+        }
+
+        .diary-list {
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .diary-empty {
+            padding: 30px 16px;
+            text-align: center;
+            color: #64748B;
+            line-height: 1.5;
+        }
+
+        .diary-entry {
+            background: white;
+            border: 1px solid #CBD5E1;
+            border-left: 4px solid #94A3B8;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .diary-entry.level-red { border-left-color: #DC2626; }
+        .diary-entry.level-orange { border-left-color: #EA580C; }
+        .diary-entry.level-green { border-left-color: #16A34A; }
+
+        .diary-entry summary {
+            cursor: pointer;
+            padding: 12px;
+            color: #0F172A;
+            font-weight: 700;
+        }
+
+        .diary-entry summary small {
+            display: block;
+            margin-top: 5px;
+            color: #64748B;
+            font-weight: 400;
+        }
+
+        .diary-entry-content {
+            padding: 0 12px 12px;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .diary-content-block {
+            margin: 8px 0;
+            padding: 9px;
+            background: #F1F5F9;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .diary-recommendation {
+            padding: 10px;
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 6px;
+        }
+
+        .diary-timeline {
+            margin: 10px 0 14px;
+            padding-left: 20px;
+        }
+
+        .diary-timeline li { margin: 5px 0; }
+
+        .incident-checklist {
+            margin: 8px 0 14px;
+            padding-left: 10px;
+            border-left: 3px solid #0F766E;
+        }
+
+        .incident-checklist-progress {
+            margin: 5px 0 8px;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .incident-checklist label {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin: 7px 0;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .incident-checklist input {
+            flex: 0 0 20px;
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            accent-color: #0F766E;
+        }
+
+        .diary-form label {
+            display: block;
+            margin: 9px 0 5px;
+            font-weight: 700;
+        }
+
+        .diary-form select,
+        .diary-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #94A3B8;
+            border-radius: 6px;
+            background: white;
+            font: inherit;
+            font-size: 14px;
+        }
+
+        .diary-form textarea {
+            min-height: 68px;
+            resize: vertical;
+        }
+
+        .diary-entry-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .diary-save-btn,
+        .diary-delete-btn,
+        .diary-clear-btn {
+            min-height: 38px;
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+
+        .diary-save-btn { background: #0F766E; color: white; }
+        .diary-delete-btn,
+        .diary-clear-btn { background: #FEF2F2; color: #B91C1C; }
+
+        .diary-footer {
+            padding: 10px 12px;
+            border-top: 1px solid #E2E8F0;
+            text-align: right;
+        }
+
+        @media (max-width: 480px) {
+            .diary-modal { padding: 0; }
+            .diary-panel { max-height: 100vh; height: 100%; border-radius: 0; }
+            .diary-heading h2 { font-size: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- MÀN HÌNH ĐĂNG NHẬP -->
+<div id="login-screen" class="login-screen">
+    <div class="login-box">
+        <div class="login-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h1>SafeAI</h1>
+        <p class="login-subtitle">Trợ lý an toàn AI</p>
+        <p class="login-desc">Bảo vệ Cụ trước các tin nhắn lừa đảo</p>
+        <input type="tel" id="login-phone" placeholder="📱 Số điện thoại" maxlength="15">
+        <input type="password" id="login-password" placeholder="🔐 Mật khẩu">
+        <button class="login-btn" id="login-submit" onclick="loginUser()">
+            <i class="fa-solid fa-right-to-bracket"></i> ĐĂNG NHẬP
+        </button>
+        <button class="login-secondary-btn" id="register-submit" onclick="registerUser()">TẠO TÀI KHOẢN</button>
+        <p class="login-otp-note" id="login-otp-note">Nhập mã OTP được gửi đến số điện thoại của Cụ.</p>
+        <input type="text" id="login-otp" inputmode="numeric" autocomplete="one-time-code" placeholder="Mã OTP" maxlength="10" style="display:none;">
+        <button class="login-btn" id="verify-otp-submit" onclick="verifyLoginOtp()" style="display:none;">
+            <i class="fa-solid fa-shield-check"></i> XÁC MINH OTP
+        </button>
+        <button class="login-secondary-btn" id="resend-otp-submit" onclick="resendLoginOtp()" style="display:none;">GỬI LẠI MÃ OTP</button>
+        <div id="login-message"></div>
+    </div>
+</div>
+
+<!-- HỘP HỒ SƠ -->
+<div id="profile-modal" class="profile-modal">
+    <div class="profile-box">
+        <div class="profile-title">
+            <i class="fa-solid fa-user-circle"></i>
+            <span>Hồ sơ của Cụ</span>
+        </div>
+        <div class="profile-desc">
+            Hai số điện thoại này sẽ được dùng khi Cụ cần liên hệ người thân trong trường hợp khẩn cấp.
+        </div>
+        <div class="profile-account">
+            📱 Tài khoản của Cụ:
+            <strong id="profile-account-phone">---</strong>
+        </div>
+        <label class="profile-label">📞 Người thân 1</label>
+        <input type="tel" id="profile-phone1" class="profile-input" placeholder="Nhập số điện thoại người thân 1" maxlength="15">
+        
+        <label class="profile-label">📞 Người thân 2</label>
+        <input type="tel" id="profile-phone2" class="profile-input" placeholder="Nhập số điện thoại người thân 2" maxlength="15">
+
+        <div class="profile-buttons">
+            <button class="profile-close-btn" onclick="closeProfile()">ĐÓNG</button>
+            <button class="profile-save-btn" onclick="saveProfile()">
+                <i class="fa-solid fa-floppy-disk"></i> LƯU
+            </button>
+        </div>
+        <button class="profile-logout-btn" onclick="logoutUser()">
+            <i class="fa-solid fa-right-from-bracket"></i> ĐĂNG XUẤT
+        </button>
+    </div>
+</div>
+
+<!-- PHANH KHAN CAP -->
+<div id="brake-modal" class="brake-modal" role="dialog" aria-modal="true" aria-labelledby="brake-title">
+    <section class="brake-panel">
+        <h2 class="brake-heading" id="brake-title"><i class="fa-solid fa-hand"></i> Dừng lại, xử lý từng bước</h2>
+        <div class="brake-caution">Chưa chuyển thêm tiền, không cung cấp OTP/mật khẩu và không cài ứng dụng theo hướng dẫn của người lạ.</div>
+        <p class="brake-limit-note">SafeAI không thể khóa giao dịch hoặc gọi ngân hàng thay Cụ. Nếu đã chuyển tiền/lộ OTP, hãy tự gọi ngân hàng qua số trên thẻ hoặc ứng dụng chính thức ngay.</p>
+        <label class="brake-label" for="brake-status">Cụ đã làm đến bước nào?</label>
+        <select id="brake-status" class="brake-status-select"></select>
+        <div id="brake-next-step" class="brake-next-step"></div>
+        <div id="brake-checklist" class="brake-checklist"></div>
+        <div id="brake-message" class="lookup-muted" aria-live="polite"></div>
+        <div id="brake-family-actions" class="brake-buttons"></div>
+        <div class="brake-buttons">
+            <button class="brake-button primary" id="brake-save" onclick="saveEmergencyBrake()">LƯU TIẾN ĐỘ</button>
+            <button class="brake-button secondary" onclick="closeEmergencyBrake()">ĐÓNG</button>
+        </div>
+    </section>
+</div>
+
+<!-- NHẬT KÝ LỪA ĐẢO -->
+<div id="diary-modal" class="diary-modal" role="dialog" aria-modal="true" aria-labelledby="diary-title">
+    <section class="diary-panel">
+        <div class="diary-heading">
+            <h2 id="diary-title"><i class="fa-solid fa-book-open"></i> Nhật ký lừa đảo</h2>
+            <button class="diary-close-btn" onclick="closeDiary()" aria-label="Đóng nhật ký">&times;</button>
+        </div>
+        <div class="diary-private-note">Lịch sử được lưu trên máy chủ và đồng bộ theo tài khoản của Cụ.</div>
+        <div id="diary-list" class="diary-list"></div>
+        <div class="diary-footer">
+            <button class="diary-clear-btn" onclick="clearDiary()">Xóa toàn bộ nhật ký</button>
+        </div>
+    </section>
+</div>
+
+<!-- GIAO DIỆN SAFEAI -->
+<div class="mobile-frame">
+    <!-- Header -->
+    <div class="zalo-header">
+        <button class="sos-btn" onclick="openProfile()">
+            <i class="fa-solid fa-user"></i> Hồ sơ
+        </button>
+        <div class="header-title">
+            <i class="fa-solid fa-shield-halved" style="font-size: 22px;"></i>
+            <span>Trợ Lý An Toàn AI</span>
+        </div>
+        <button class="sos-btn" onclick="triggerSOS()">
+            <i class="fa-solid fa-phone-volume"></i> SOS
+        </button>
+    </div>
+
+    <!-- Security Banner -->
+    <div class="security-banner">
+        <span class="status-dot"></span> Hệ thống đang bảo vệ 24/7 trước các kịch bản lừa đảo
+    </div>
+
+    <div class="diary-toolbar">
+        <span id="diary-count">Chưa có lượt kiểm tra nào được lưu</span>
+        <button class="diary-open-btn" onclick="openDiary()">
+            <i class="fa-solid fa-book-open"></i> Nhật ký
+        </button>
+    </div>
+
+    <!-- Chat Body -->
+    <div class="chat-body" id="chatBody">
+        <div class="message bot-msg">
+            <div style="font-weight: bold; color: #0068FF; margin-bottom: 4px;">
+                <i class="fa-solid fa-robot"></i> Trợ lý AI chào Cụ!
+            </div>
+            Cụ nói hoặc dán tin nhắn nghi ngờ vào ô bên dưới, cháu sẽ kiểm tra giúp Cụ ngay nhé!
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+        <div class="lookup-panel">
+            <div class="lookup-row">
+                <input type="text" id="lookup-input" maxlength="2048" placeholder="Dán link hoặc số điện thoại cần tra cứu" aria-label="Link hoặc số điện thoại cần tra cứu">
+                <button class="lookup-button" onclick="lookupIndicator()"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</button>
+            </div>
+            <p class="lookup-note">Tra link sẽ gửi URL, gồm cả tham số truy vấn, tới Google Safe Browsing; tránh link riêng tư. Tra số dùng báo cáo cộng đồng, chưa đủ căn cứ kết luận.</p>
+            <div id="lookup-result" class="lookup-result" aria-live="polite"></div>
+        </div>
+
+        <div class="input-wrapper">
+            <textarea id="userInput" placeholder="Nhập hoặc nhấn mic để nói..."></textarea>
+            
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            
+            <button class="mic-btn" id="imgBtn" style="right: 52px;" onclick="document.getElementById('imageInput').click()" title="Tải ảnh màn hình">
+                <i class="fa-solid fa-image"></i>
+            </button>
+
+            <!-- Nút Mic: Chuyên trách Bật / Tắt Mic -->
+            <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Bấm để bật/tắt mic">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+        </div>
+
+        <!-- Nút Kiểm Tra: Chuyên trách gửi nội dung đi phân tích -->
+        <button class="send-btn" onclick="sendMessage()">
+            <i class="fa-solid fa-magnifying-glass"></i> KIỂM TRA NGAY
+        </button>
+    </div>
+</div>
+
+<script>
+    let currentUserPhone = null;
+    let diaryEntriesCache = [];
+    let pendingAuthMode = null;
+    let activeEmergencyEntry = null;
+    let activeEmergencyActions = new Set();
+
+    async function loginUser() {
+        await requestAuthOtp("login");
+    }
+
+    async function registerUser() {
+        await requestAuthOtp("register");
+    }
+
+    async function requestAuthOtp(mode) {
+        const phone = document.getElementById("login-phone").value.trim();
+        const password = document.getElementById("login-password").value;
+        const message = document.getElementById("login-message");
+        message.textContent = "Đang gửi yêu cầu...";
+        try {
+            const response = await fetch("/api/auth/request-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, password, mode })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Không thể gửi mã OTP.");
+            pendingAuthMode = mode;
+            document.getElementById("login-otp-note").style.display = "block";
+            document.getElementById("login-otp").style.display = "block";
+            document.getElementById("verify-otp-submit").style.display = "block";
+            document.getElementById("resend-otp-submit").style.display = "block";
+            document.getElementById("login-submit").style.display = "none";
+            document.getElementById("register-submit").style.display = "none";
+            message.textContent = data.message;
+            document.getElementById("login-otp").focus();
+        } catch (error) {
+            message.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    async function resendLoginOtp() {
+        if (!pendingAuthMode) return;
+        await requestAuthOtp(pendingAuthMode);
+    }
+
+    async function verifyLoginOtp() {
+        const message = document.getElementById("login-message");
+        const code = document.getElementById("login-otp").value.trim();
+        message.textContent = "Đang xác minh...";
+        try {
+            const response = await fetch("/api/auth/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Mã OTP không hợp lệ.");
+            await completeAuthenticatedSession(data.phone);
+        } catch (error) {
+            message.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    async function completeAuthenticatedSession(phone) {
+        currentUserPhone = phone;
+        localStorage.removeItem("safeai_logged_in");
+        localStorage.removeItem("user_phone");
+        for (let index = localStorage.length - 1; index >= 0; index--) {
+            const key = localStorage.key(index);
+            if (key && key.startsWith("user_password_")) localStorage.removeItem(key);
+        }
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("profile-account-phone").textContent = phone;
+        document.getElementById("login-message").textContent = "";
+        document.getElementById("login-password").value = "";
+        document.getElementById("login-otp").value = "";
+        resetOtpForm();
+        await migrateLegacyDiary(phone);
+        try {
+            await refreshDiaryEntries();
+        } catch (error) {
+            console.warn("Chưa tải được nhật ký từ máy chủ:", error);
+        }
+    }
+
+    async function migrateLegacyDiary(phone) {
+        const phoneWithoutCountryCode = phone.startsWith("+84") ? "0" + phone.slice(3) : phone;
+        const keys = new Set([
+            "scam_diary_" + phone,
+            "scam_diary_" + phoneWithoutCountryCode
+        ]);
+        const entries = [];
+        const keysToRemove = [];
+        keys.forEach(function (key) {
+            try {
+                const saved = JSON.parse(localStorage.getItem(key) || "[]");
+                if (Array.isArray(saved)) entries.push(...saved);
+                if (localStorage.getItem(key)) keysToRemove.push(key);
+            } catch (error) {
+                console.warn("Không thể đọc nhật ký cũ trên thiết bị:", error);
+            }
+        });
+        if (!entries.length) return;
+        try {
+            for (let index = 0; index < entries.length; index += 100) {
+                const response = await fetch("/api/diary/import", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ entries: entries.slice(index, index + 100) })
+                });
+                if (!response.ok) return;
+            }
+            keysToRemove.forEach(function (key) { localStorage.removeItem(key); });
+        } catch (error) {
+            console.warn("Chưa nhập được nhật ký cũ:", error);
+        }
+    }
+
+    async function initializeAuth() {
+        try {
+            const response = await fetch("/api/auth/me");
+            if (!response.ok) throw new Error("Chưa đăng nhập");
+            const data = await response.json();
+            await completeAuthenticatedSession(data.phone);
+        } catch (error) {
+            currentUserPhone = null;
+            document.getElementById("login-screen").style.display = "flex";
+            updateDiaryCount();
+        }
+    }
+
+    async function logoutUser() {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+        } catch (error) {
+            console.warn("Không kết nối được máy chủ khi đăng xuất:", error);
+        }
+        currentUserPhone = null;
+        diaryEntriesCache = [];
+        closeProfile();
+        closeDiary();
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("login-password").value = "";
+        document.getElementById("login-otp").value = "";
+        document.getElementById("login-message").textContent = "";
+        resetOtpForm();
+        updateDiaryCount();
+    }
+
+    function resetOtpForm() {
+        pendingAuthMode = null;
+        document.getElementById("login-otp-note").style.display = "none";
+        document.getElementById("login-otp").style.display = "none";
+        document.getElementById("verify-otp-submit").style.display = "none";
+        document.getElementById("resend-otp-submit").style.display = "none";
+        document.getElementById("login-submit").style.display = "block";
+        document.getElementById("register-submit").style.display = "block";
+    }
+
+    window.addEventListener("DOMContentLoaded", initializeAuth);
+
+    let activePhoneLookup = "";
+    const phoneReportCategories = {
+        impersonation: "Mạo danh tổ chức hoặc người quen",
+        otp_request: "Yêu cầu OTP hoặc mật khẩu",
+        money_request: "Yêu cầu chuyển tiền đáng ngờ",
+        threat: "Đe dọa hoặc gây áp lực",
+        spam: "Cuộc gọi/tin nhắn làm phiền"
+    };
+
+    function showLookupMessage(text, className) {
+        const result = document.getElementById("lookup-result");
+        result.replaceChildren();
+        const message = document.createElement("div");
+        message.className = "lookup-message " + (className || "lookup-muted");
+        message.textContent = text;
+        result.appendChild(message);
+    }
+
+    async function lookupIndicator() {
+        const input = document.getElementById("lookup-input");
+        const value = input.value.trim();
+        if (!currentUserPhone) {
+            showLookupMessage("Cụ vui lòng đăng nhập để tra cứu.", "lookup-muted");
+            return;
+        }
+        if (!value) {
+            showLookupMessage("Hãy nhập link hoặc số điện thoại cần tra cứu.", "lookup-muted");
+            input.focus();
+            return;
+        }
+
+        const phoneCandidate = value.replace(/[\s().+-]/g, "");
+        const isPhone = /^\d{8,15}$/.test(phoneCandidate);
+        const result = document.getElementById("lookup-result");
+        result.replaceChildren();
+        const loading = document.createElement("div");
+        loading.className = "lookup-message lookup-muted";
+        loading.textContent = isPhone ? "Đang tra báo cáo cộng đồng..." : "Đang đối chiếu link với Google Safe Browsing...";
+        result.appendChild(loading);
+        activePhoneLookup = isPhone ? value : "";
+
+        try {
+            if (isPhone) {
+                const response = await fetch("/api/lookup/phone?phone=" + encodeURIComponent(value));
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Chưa tra được số điện thoại.");
+                renderPhoneLookup(data);
+                return;
+            }
+
+            const response = await fetch("/api/lookup/url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: value })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa thể xác minh liên kết.");
+            renderUrlLookup(data);
+        } catch (error) {
+            showLookupMessage(error.message || "Không kết nối được máy chủ tra cứu.", "lookup-muted");
+        }
+    }
+
+    function renderUrlLookup(data) {
+        const result = document.getElementById("lookup-result");
+        result.replaceChildren();
+        const found = data.status === "match";
+        const message = document.createElement("div");
+        message.className = "lookup-message " + (found ? "lookup-danger" : "lookup-muted");
+        message.textContent = found
+            ? "Google Safe Browsing ghi nhận link này có dấu hiệu nguy hiểm. Không mở link hoặc nhập thông tin."
+            : "Chưa thấy link trong danh sách cảnh báo tại thời điểm tra cứu. Điều này không đảm bảo link an toàn.";
+        result.appendChild(message);
+
+        const threatNames = {
+            MALWARE: "Phần mềm độc hại",
+            SOCIAL_ENGINEERING: "Lừa đảo hoặc đánh cắp thông tin",
+            UNWANTED_SOFTWARE: "Phần mềm không mong muốn",
+            POTENTIALLY_HARMFUL_APPLICATION: "Ứng dụng có khả năng gây hại"
+        };
+        if (found && Array.isArray(data.threat_types)) {
+            const list = document.createElement("ul");
+            list.className = "lookup-categories";
+            data.threat_types.forEach(function (type) {
+                const item = document.createElement("li");
+                item.textContent = threatNames[type] || "Dấu hiệu nguy hiểm đã biết";
+                list.appendChild(item);
+            });
+            result.appendChild(list);
+        }
+        if (data.checked_at) {
+            const checked = document.createElement("div");
+            checked.className = "lookup-muted";
+            checked.textContent = "Tra cứu lúc " + new Date(data.checked_at * 1000).toLocaleString("vi-VN");
+            result.appendChild(checked);
+        }
+    }
+
+    function renderPhoneLookup(data) {
+        const result = document.getElementById("lookup-result");
+        result.replaceChildren();
+        const message = document.createElement("div");
+        message.className = "lookup-message " + (data.confidence === "multiple" ? "lookup-danger" : "lookup-muted");
+        if (data.confidence === "none") {
+            message.textContent = "Chưa có báo cáo cộng đồng về số này. Chưa có báo cáo không đồng nghĩa số điện thoại an toàn.";
+        } else if (data.confidence === "few") {
+            message.textContent = `Có ${data.report_count} tài khoản báo cáo số này. Đây chỉ là thông tin tham khảo, chưa đủ căn cứ kết luận.`;
+        } else {
+            message.textContent = `${data.report_count} tài khoản đã báo cáo số này. Đây là báo cáo cộng đồng, không phải kết luận chính thức.`;
+        }
+        result.appendChild(message);
+
+        if (Array.isArray(data.categories) && data.categories.length) {
+            const list = document.createElement("ul");
+            list.className = "lookup-categories";
+            data.categories.forEach(function (category) {
+                const item = document.createElement("li");
+                item.textContent = `${category.label}: ${category.count}`;
+                list.appendChild(item);
+            });
+            result.appendChild(list);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "lookup-report-actions";
+        if (data.reported_by_me) {
+            const ownReport = document.createElement("div");
+            ownReport.textContent = "Bạn đã báo cáo: " + (phoneReportCategories[data.reported_by_me] || "Khác");
+            const removeButton = document.createElement("button");
+            removeButton.className = "lookup-button";
+            removeButton.textContent = "Gỡ báo cáo của tôi";
+            removeButton.addEventListener("click", removePhoneReport);
+            actions.append(ownReport, removeButton);
+        } else {
+            const select = document.createElement("select");
+            select.id = "phone-report-category";
+            Object.entries(phoneReportCategories).forEach(function ([value, label]) {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                select.appendChild(option);
+            });
+            const reportButton = document.createElement("button");
+            reportButton.className = "lookup-button";
+            reportButton.textContent = "Báo cáo số này";
+            reportButton.addEventListener("click", submitPhoneReport);
+            actions.append(select, reportButton);
+        }
+        result.appendChild(actions);
+    }
+
+    async function submitPhoneReport() {
+        if (!activePhoneLookup) return;
+        if (!confirm("Chỉ báo cáo nếu Cụ đã trực tiếp nhận cuộc gọi/tin nhắn có dấu hiệu này. Báo cáo sẽ được tính ẩn danh.")) return;
+        const category = document.getElementById("phone-report-category").value;
+        await updatePhoneReport("POST", { phone: activePhoneLookup, category: category });
+    }
+
+    async function removePhoneReport() {
+        if (!activePhoneLookup || !confirm("Gỡ báo cáo của Cụ khỏi số điện thoại này?")) return;
+        await updatePhoneReport("DELETE", { phone: activePhoneLookup });
+    }
+
+    async function updatePhoneReport(method, body) {
+        try {
+            const response = await fetch("/api/lookup/phone/report", {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa cập nhật được báo cáo.");
+            renderPhoneLookup(data);
+        } catch (error) {
+            showLookupMessage(error.message || "Không kết nối được máy chủ.", "lookup-muted");
+        }
+    }
+
+    const diaryStatuses = {
+        no_action: "Chưa tương tác với người gửi",
+        clicked_link: "Đã bấm liên kết, chưa nhập thông tin",
+        shared_info: "Đã cung cấp thông tin cá nhân/tài khoản",
+        shared_otp: "Đã cung cấp OTP hoặc mã xác thực",
+        installed_app: "Đã cài ứng dụng lạ hoặc cho điều khiển máy",
+        transferred_money: "Đã chuyển tiền",
+        handled: "Đã xử lý và bảo vệ tài khoản"
+    };
+
+    const diaryChecklists = {
+        no_action: [
+            { id: "pause", text: "Tạm dừng trả lời, bấm link hoặc chuyển tiền cho đến khi xác minh." },
+            { id: "verify", text: "Tự mở ứng dụng hoặc gọi số chính thức của tổ chức liên quan." },
+            { id: "save", text: "Lưu lại tin nhắn, số điện thoại hoặc đường link để đối chiếu." }
+        ],
+        clicked_link: [
+            { id: "close", text: "Đóng trang vừa mở; không tải ứng dụng hay nhập thêm thông tin." },
+            { id: "check", text: "Nếu đã nhập mật khẩu/thông tin ngân hàng, đổi hoặc khóa ngay từ thiết bị an toàn." },
+            { id: "call", text: "Liên hệ ngân hàng/dịch vụ liên quan qua số chính thức nếu đã nhập dữ liệu." }
+        ],
+        shared_info: [
+            { id: "contact", text: "Gọi tổ chức liên quan qua số chính thức để khóa hoặc bảo vệ tài khoản." },
+            { id: "change", text: "Đổi mật khẩu từ thiết bị an toàn và đăng xuất các phiên lạ." },
+            { id: "monitor", text: "Kiểm tra giao dịch; nếu đã lộ thông tin ngân hàng, gọi ngân hàng ngay." }
+        ],
+        shared_otp: [
+            { id: "freeze", text: "Gọi ngay ngân hàng/nhà mạng qua số chính thức để khóa giao dịch hoặc dịch vụ." },
+            { id: "secure", text: "Đổi mật khẩu và thu hồi phiên đăng nhập lạ từ thiết bị an toàn." },
+            { id: "evidence", text: "Lưu tin nhắn, thời điểm và thông báo giao dịch; ghi lại mã tiếp nhận hỗ trợ." }
+        ],
+        installed_app: [
+            { id: "disconnect", text: "Ngắt Wi-Fi và dữ liệu di động trên thiết bị nghi bị điều khiển." },
+            { id: "contact", text: "Dùng điện thoại khác gọi ngân hàng nếu có ứng dụng/tài khoản ngân hàng trên máy." },
+            { id: "clean", text: "Nhờ người tin cậy kiểm tra và gỡ ứng dụng lạ; đổi mật khẩu từ thiết bị sạch." }
+        ],
+        transferred_money: [
+            { id: "bank", text: "Gọi ngay ngân hàng qua số trên thẻ/ứng dụng chính thức để yêu cầu hỗ trợ khẩn cấp." },
+            { id: "evidence", text: "Giữ biên lai, mã giao dịch, tin nhắn, số tài khoản và thời điểm chuyển tiền." },
+            { id: "report", text: "Nhờ người thân hỗ trợ trình báo công an và ghi lại mã tiếp nhận." },
+            { id: "recovery", text: "Không chuyển thêm phí cho ai hứa chắc chắn lấy lại tiền." }
+        ],
+        handled: [
+            { id: "follow_up", text: "Theo dõi yêu cầu hỗ trợ của ngân hàng/cơ quan tiếp nhận và lưu mã hồ sơ." },
+            { id: "monitor", text: "Theo dõi giao dịch và tài khoản trong những ngày tiếp theo." },
+            { id: "protect", text: "Chỉ đổi thẻ, mật khẩu hoặc thiết bị theo hướng dẫn từ kênh chính thức." }
+        ]
+    };
+
+    async function refreshDiaryEntries() {
+        const response = await fetch("/api/diary");
+        if (!response.ok) throw new Error("Không tải được nhật ký từ máy chủ.");
+        const data = await response.json();
+        diaryEntriesCache = Array.isArray(data.entries) ? data.entries : [];
+        updateDiaryCount();
+        return diaryEntriesCache;
+    }
+
+    function updateDiaryCount() {
+        const countLabel = document.getElementById("diary-count");
+        if (!countLabel) return;
+        const count = diaryEntriesCache.length;
+        countLabel.textContent = count
+            ? `Đã lưu ${count} lượt kiểm tra`
+            : "Chưa có lượt kiểm tra nào được lưu";
+    }
+
+    async function saveDiaryEntry(sourceText, result) {
+        if (!currentUserPhone) return;
+        const rawLevel = String(result.alert_level || "orange").toLowerCase();
+        const entry = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            createdAt: new Date().toISOString(),
+            sourceText: sourceText || "Không có nội dung trích xuất.",
+            reply: result.reply || "Chưa có lời khuyên từ hệ thống.",
+            level: ["red", "orange", "green"].includes(rawLevel) ? rawLevel : "orange"
+        };
+        try {
+            const response = await fetch("/api/diary", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(entry)
+            });
+            if (!response.ok) throw new Error("Máy chủ chưa lưu được nhật ký.");
+            const savedEntry = { ...entry, status: "no_action", notes: "", events: [], checklist: [] };
+            diaryEntriesCache.unshift(savedEntry);
+            updateDiaryCount();
+            return savedEntry;
+        } catch (error) {
+            console.error("Không đồng bộ được nhật ký:", error);
+            alert("Phân tích đã xong nhưng nhật ký chưa đồng bộ. Hãy kiểm tra kết nối rồi thử lại.");
+            return null;
+        }
+    }
+
+    function formatDiaryDate(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "Không rõ thời gian" : date.toLocaleString("vi-VN");
+    }
+
+    function recommendationFor(entry) {
+        if (entry.status === "transferred_money") {
+            return "Gọi ngay ngân hàng qua số trên thẻ hoặc ứng dụng chính thức để yêu cầu hỗ trợ khóa giao dịch/tài khoản. Giữ lại biên lai, tin nhắn và thông tin người nhận; trình báo công an. Không trả thêm phí để được hứa lấy lại tiền.";
+        }
+        if (entry.status === "shared_info") {
+            return "Liên hệ tổ chức liên quan qua kênh chính thức để bảo vệ tài khoản. Đổi mật khẩu từ thiết bị an toàn; nếu đã cung cấp thông tin ngân hàng, gọi ngân hàng ngay.";
+        }
+        if (entry.status === "shared_otp") {
+            return "Gọi ngay ngân hàng, nhà mạng hoặc dịch vụ liên quan qua số chính thức để khóa giao dịch/phiên đăng nhập. Đổi mật khẩu từ thiết bị an toàn và không cung cấp mã OTP tiếp theo.";
+        }
+        if (entry.status === "installed_app") {
+            return "Ngắt mạng trên thiết bị nghi bị điều khiển. Dùng điện thoại khác liên hệ ngân hàng nếu có tài khoản tài chính trên máy; nhờ người tin cậy kiểm tra thiết bị.";
+        }
+        if (entry.status === "clicked_link") {
+            return "Đóng trang đó và không nhập thêm thông tin hay tải ứng dụng. Nếu đã nhập mật khẩu hoặc thông tin ngân hàng, hãy đổi mật khẩu và gọi đơn vị liên quan qua số chính thức ngay.";
+        }
+        if (entry.status === "handled") {
+            return "Tiếp tục theo dõi giao dịch và tài khoản trong vài ngày, giữ lại bằng chứng, đồng thời chỉ liên hệ tổ chức qua ứng dụng hoặc số điện thoại chính thức.";
+        }
+        if (entry.level === "red") {
+            return "Không chuyển tiền, không cung cấp OTP/mật khẩu và không bấm liên kết. Dừng liên lạc, chặn người gửi, lưu bằng chứng; xác minh với tổ chức qua kênh chính thức.";
+        }
+        if (entry.level === "orange") {
+            return "Tạm dừng trả lời và chưa thực hiện yêu cầu. Tự gọi tổ chức qua số trên thẻ hoặc ứng dụng chính thức để xác minh; không dùng số điện thoại hay liên kết trong tin nhắn.";
+        }
+        return "Chưa thấy dấu hiệu nguy hiểm rõ ràng. Cụ vẫn nên xác minh trên ứng dụng hoặc website chính thức và không chia sẻ OTP, mật khẩu.";
+    }
+
+    function openEmergencyBrake(entryId) {
+        if (!currentUserPhone) {
+            alert("Cụ vui lòng đăng nhập để lưu tiến độ xử lý.");
+            return;
+        }
+        activeEmergencyEntry = diaryEntriesCache.find(function (entry) { return entry.id === entryId; });
+        if (!activeEmergencyEntry) {
+            alert("Chưa tìm thấy hồ sơ cảnh báo. Hãy mở Nhật ký để đồng bộ lại.");
+            return;
+        }
+
+        const statusSelect = document.getElementById("brake-status");
+        statusSelect.replaceChildren();
+        Object.entries(diaryStatuses).forEach(function ([value, label]) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            option.selected = value === activeEmergencyEntry.status;
+            statusSelect.appendChild(option);
+        });
+        activeEmergencyActions = new Set(activeEmergencyEntry.checklist || []);
+        statusSelect.onchange = function () {
+            activeEmergencyActions = new Set();
+            renderEmergencyChecklist();
+        };
+        renderEmergencyChecklist();
+        renderEmergencyContacts();
+        document.getElementById("brake-message").textContent = "";
+        document.getElementById("brake-modal").style.display = "flex";
+        document.getElementById("brake-save").focus();
+    }
+
+    function renderEmergencyChecklist() {
+        const status = document.getElementById("brake-status").value;
+        const entryForAdvice = { ...activeEmergencyEntry, status: status };
+        document.getElementById("brake-next-step").textContent = "Ưu tiên: " + recommendationFor(entryForAdvice);
+        const checklist = document.getElementById("brake-checklist");
+        checklist.replaceChildren();
+        (diaryChecklists[status] || []).forEach(function (action) {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = activeEmergencyActions.has(action.id);
+            checkbox.addEventListener("change", function () {
+                if (checkbox.checked) activeEmergencyActions.add(action.id);
+                else activeEmergencyActions.delete(action.id);
+            });
+            const text = document.createElement("span");
+            text.textContent = action.text;
+            label.append(checkbox, text);
+            checklist.appendChild(label);
+        });
+    }
+
+    function renderEmergencyContacts() {
+        const actions = document.getElementById("brake-family-actions");
+        actions.replaceChildren();
+        const accountPhone = currentUserPhone;
+        const contacts = [
+            { label: "Gọi người thân 1", phone: localStorage.getItem("sos_phone1_" + accountPhone) || "" },
+            { label: "Gọi người thân 2", phone: localStorage.getItem("sos_phone2_" + accountPhone) || "" }
+        ].filter(function (contact) { return contact.phone.trim(); });
+
+        if (!contacts.length) {
+            const setupButton = document.createElement("button");
+            setupButton.className = "brake-button";
+            setupButton.textContent = "THÊM SỐ NGƯỜI THÂN";
+            setupButton.addEventListener("click", function () {
+                closeEmergencyBrake();
+                openProfile();
+            });
+            actions.appendChild(setupButton);
+            return;
+        }
+
+        contacts.forEach(function (contact) {
+            const callButton = document.createElement("button");
+            callButton.className = "brake-button";
+            callButton.textContent = contact.label;
+            callButton.addEventListener("click", function () {
+                const phone = contact.phone.replace(/[^\d+]/g, "");
+                if (!phone || !confirm("Gọi cho người thân để nhờ xác minh cùng Cụ? SafeAI không gửi nội dung hay gọi thay Cụ.")) return;
+                window.location.href = "tel:" + phone;
+            });
+            actions.appendChild(callButton);
+        });
+    }
+
+    async function saveEmergencyBrake() {
+        if (!activeEmergencyEntry) return;
+        const saveButton = document.getElementById("brake-save");
+        const message = document.getElementById("brake-message");
+        saveButton.disabled = true;
+        message.textContent = "Đang lưu tiến độ...";
+        try {
+            const response = await fetch(`/api/diary/${encodeURIComponent(activeEmergencyEntry.id)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    status: document.getElementById("brake-status").value,
+                    notes: activeEmergencyEntry.notes || "",
+                    checklist: Array.from(activeEmergencyActions)
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa lưu được tiến độ.");
+            await refreshDiaryEntries();
+            activeEmergencyEntry = diaryEntriesCache.find(function (entry) { return entry.id === activeEmergencyEntry.id; });
+            activeEmergencyActions = new Set(activeEmergencyEntry ? activeEmergencyEntry.checklist : []);
+            message.textContent = "Đã lưu tiến độ vào Nhật ký và đồng bộ tài khoản.";
+            if (activeEmergencyEntry) renderEmergencyChecklist();
+        } catch (error) {
+            message.textContent = error.message || "Không kết nối được máy chủ.";
+        } finally {
+            saveButton.disabled = false;
+        }
+    }
+
+    function closeEmergencyBrake() {
+        document.getElementById("brake-modal").style.display = "none";
+        activeEmergencyEntry = null;
+        activeEmergencyActions = new Set();
+    }
+
+    async function openDiary() {
+        if (!currentUserPhone) {
+            alert("Cụ vui lòng đăng nhập để xem nhật ký.");
+            return;
+        }
+        document.getElementById("diary-modal").style.display = "flex";
+        try {
+            await refreshDiaryEntries();
+            renderDiary();
+        } catch (error) {
+            renderDiary(error.message);
+        }
+    }
+
+    function closeDiary() {
+        document.getElementById("diary-modal").style.display = "none";
+    }
+
+    function renderDiary(errorMessage) {
+        const list = document.getElementById("diary-list");
+        const entries = diaryEntriesCache;
+        list.replaceChildren();
+        if (errorMessage || !entries.length) {
+            const empty = document.createElement("div");
+            empty.className = "diary-empty";
+            empty.textContent = errorMessage || "Chưa có hồ sơ nào. Sau mỗi lần kiểm tra tin nhắn hoặc ảnh, kết quả sẽ được lưu tại đây.";
+            list.appendChild(empty);
+            return;
+        }
+
+        entries.forEach(function (entry) {
+            const details = document.createElement("details");
+            details.className = `diary-entry level-${entry.level || "orange"}`;
+            const summary = document.createElement("summary");
+            const title = document.createElement("span");
+            title.textContent = `Cảnh báo ${String(entry.level || "orange").toUpperCase()} · ${diaryStatuses[entry.status] || diaryStatuses.no_action}`;
+            const date = document.createElement("small");
+            date.textContent = formatDiaryDate(entry.createdAt);
+            summary.append(title, date);
+
+            const content = document.createElement("div");
+            content.className = "diary-entry-content";
+            const sourceLabel = document.createElement("strong");
+            sourceLabel.textContent = "Nội dung đã kiểm tra";
+            const source = document.createElement("div");
+            source.className = "diary-content-block";
+            source.textContent = entry.sourceText;
+            const adviceLabel = document.createElement("strong");
+            adviceLabel.textContent = "Kết quả và lời khuyên của AI";
+            const advice = document.createElement("div");
+            advice.className = "diary-content-block";
+            advice.textContent = entry.reply;
+            const recommend = document.createElement("div");
+            recommend.className = "diary-recommendation";
+            recommend.textContent = "Giải pháp tiếp theo: " + recommendationFor(entry);
+            const timelineTitle = document.createElement("strong");
+            timelineTitle.textContent = "Quá trình xử lý";
+            const timeline = document.createElement("ol");
+            timeline.className = "diary-timeline";
+            (entry.events || []).forEach(function (event) {
+                const eventItem = document.createElement("li");
+                eventItem.textContent = `${formatDiaryDate(event.at)}: ${event.text}`;
+                timeline.appendChild(eventItem);
+            });
+
+            const checklistTitle = document.createElement("strong");
+            checklistTitle.textContent = "Việc cần làm theo tình huống";
+            const checklistProgress = document.createElement("div");
+            checklistProgress.className = "incident-checklist-progress";
+            const checklistContainer = document.createElement("div");
+            checklistContainer.className = "incident-checklist";
+            let checkedActions = new Set(entry.checklist || []);
+
+            function renderChecklist() {
+                const actionsForStatus = diaryChecklists[statusSelect.value] || [];
+                checklistContainer.replaceChildren();
+                const completedCount = actionsForStatus.filter(function (action) {
+                    return checkedActions.has(action.id);
+                }).length;
+                checklistProgress.textContent = `Đã hoàn thành ${completedCount}/${actionsForStatus.length} việc`;
+                actionsForStatus.forEach(function (action) {
+                    const label = document.createElement("label");
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.checked = checkedActions.has(action.id);
+                    checkbox.addEventListener("change", function () {
+                        if (checkbox.checked) checkedActions.add(action.id);
+                        else checkedActions.delete(action.id);
+                        renderChecklist();
+                    });
+                    const text = document.createElement("span");
+                    text.textContent = action.text;
+                    label.append(checkbox, text);
+                    checklistContainer.appendChild(label);
+                });
+            }
+
+            const form = document.createElement("div");
+            form.className = "diary-form";
+            const statusLabel = document.createElement("label");
+            statusLabel.textContent = "Tình trạng hiện tại";
+            const statusSelect = document.createElement("select");
+            Object.entries(diaryStatuses).forEach(function ([value, label]) {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                option.selected = value === entry.status;
+                statusSelect.appendChild(option);
+            });
+            statusSelect.addEventListener("change", function () {
+                checkedActions = new Set();
+                renderChecklist();
+            });
+            renderChecklist();
+            const notesLabel = document.createElement("label");
+            notesLabel.textContent = "Ghi chú diễn biến";
+            const notesInput = document.createElement("textarea");
+            notesInput.placeholder = "Ví dụ: đã gọi ngân hàng lúc 14:30, mã tiếp nhận...";
+            notesInput.value = entry.notes || "";
+            const actions = document.createElement("div");
+            actions.className = "diary-entry-actions";
+            const saveButton = document.createElement("button");
+            saveButton.className = "diary-save-btn";
+            saveButton.textContent = "Lưu cập nhật";
+            saveButton.addEventListener("click", async function () {
+                try {
+                    const response = await fetch(`/api/diary/${encodeURIComponent(entry.id)}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            status: statusSelect.value,
+                            notes: notesInput.value.trim(),
+                            checklist: Array.from(checkedActions)
+                        })
+                    });
+                    if (!response.ok) throw new Error("Không lưu được cập nhật nhật ký.");
+                    await refreshDiaryEntries();
+                    renderDiary();
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "diary-delete-btn";
+            deleteButton.textContent = "Xóa hồ sơ";
+            deleteButton.addEventListener("click", async function () {
+                if (!confirm("Cụ có chắc muốn xóa hồ sơ nhật ký này không?")) return;
+                try {
+                    const response = await fetch(`/api/diary/${encodeURIComponent(entry.id)}`, { method: "DELETE" });
+                    if (!response.ok) throw new Error("Không xóa được hồ sơ nhật ký.");
+                    await refreshDiaryEntries();
+                    renderDiary();
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+            actions.append(saveButton, deleteButton);
+            form.append(statusLabel, statusSelect, notesLabel, notesInput, actions);
+            content.append(sourceLabel, source, adviceLabel, advice, recommend, timelineTitle, timeline, checklistTitle, checklistProgress, checklistContainer, form);
+            details.append(summary, content);
+            list.appendChild(details);
+        });
+    }
+
+    async function clearDiary() {
+        if (!diaryEntriesCache.length) return;
+        if (!confirm("Xóa toàn bộ nhật ký của tài khoản này trên máy chủ?")) return;
+        try {
+            const response = await fetch("/api/diary", { method: "DELETE" });
+            if (!response.ok) throw new Error("Không xóa được nhật ký.");
+            await refreshDiaryEntries();
+            renderDiary();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    
+/* 3. ĐỌC TIẾNG VIỆT - HẠN CHẾ LẶP GIỌNG TRÊN ĐIỆN THOẠI */
+
+let currentUtterance = null;
+let speechStartTimer = null;
+
+
+function speakText(inputData) {
+    let text = String(inputData || "");
+
+    // Giải mã nội dung nếu được truyền dưới dạng URL-encoded.
+    try {
+        text = decodeURIComponent(text);
+    } catch (e) {}
+
+    // Loại bỏ HTML và chuyển các thẻ xuống dòng thành dấu ngắt câu.
+    text = text
+        .replace(/<br\s*\/?>/gi, ". ")
+        .replace(/<\/(p|div|li|h[1-6])>/gi, ". ")
+        .replace(/<[^>]*>/g, " ");
+
+    // Loại bỏ đường dẫn URL để không đọc từng ký tự trong đường link.
+    text = text.replace(/\bhttps?:\/\/\S+/gi, " đường liên kết ");
+
+    // Chuyển một số ký hiệu tiền tệ thành lời nói tự nhiên.
+    text = text
+        .replace(/₫|đồng Việt Nam/gi, " đồng ")
+        .replace(/\bVND\b/gi, " đồng ")
+        .replace(/\bVNĐ\b/gi, " đồng ")
+        .replace(/\bUSD\b/gi, " đô la Mỹ ");
+
+    // Không đọc mã định dạng Markdown và các dấu trang trí.
+    text = text
+        .replace(/```[\s\S]*?```/g, " ")
+        .replace(/[*#_~`]/g, " ")
+        .replace(/^\s*[-•]+\s*/gm, "")
+        .replace(/[🔴🟠🟢🔔⚠️🚨✅❌📱💰🔒🔗📩📞👉]/gu, " ");
+
+    // Không đọc dấu gạch chéo, gạch đứng và các ký hiệu trang trí.
+    text = text.replace(/[\/\\|]+/g, " ");
+    text = text.replace(/[_=<>^~]+/g, " ");
+
+    // Chuẩn hóa dấu câu, khoảng trắng.
+    text = text
+        .replace(/([,;:])\s*/g, "$1 ")
+        .replace(/\.{2,}/g, ". ")
+        .replace(/\s+([,.!?;:])/g, "$1")
+        .replace(/([!?]){2,}/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (!text) return;
+
+    if (!("speechSynthesis" in window) ||
+        typeof SpeechSynthesisUtterance === "undefined") {
+        alert("Điện thoại chưa hỗ trợ đọc văn bản. Cụ vui lòng mở SafeAI bằng Chrome mới nhất.");
+        return;
+    }
+
+    if (speechStartTimer) {
+        clearTimeout(speechStartTimer);
+        speechStartTimer = null;
+    }
+
+    window.speechSynthesis.cancel();
+    currentUtterance = null;
+
+    speechStartTimer = setTimeout(function () {
+        speechStartTimer = null;
+
+        const voices = window.speechSynthesis.getVoices();
+        const vietnameseVoice = voices.find(function (voice) {
+            return /^vi([_-]|$)/i.test(voice.lang);
+        });
+
+        if (!vietnameseVoice) {
+            alert(
+                "Điện thoại chưa có giọng đọc tiếng Việt. " +
+                "Cụ hãy vào Cài đặt > Đọc văn bản (Text-to-speech), " +
+                "tải giọng tiếng Việt rồi thử lại."
+            );
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        currentUtterance = utterance;
+
+        utterance.voice = vietnameseVoice;
+        utterance.lang = vietnameseVoice.lang || "vi-VN";
+        utterance.rate = 0.85;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        utterance.onend = function () {
+            if (currentUtterance === utterance) {
+                currentUtterance = null;
+            }
+        };
+
+        utterance.onerror = function (event) {
+            if (currentUtterance === utterance) {
+                currentUtterance = null;
+            }
+
+            if (event.error !== "canceled" &&
+                event.error !== "interrupted") {
+                console.warn("Lỗi đọc văn bản:", event.error);
+            }
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }, 180);
+}
+
+
+    /* 4. GỬI TIN NHẮN (KIỂM TRA BẰNG VĂN BẢN/GIỌNG NÓI ĐÃ CHUYỂN THÀNH CHỮ) */
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const chatBody = document.getElementById('chatBody');
+        const text = input.value.trim();
+
+        if (!text) {
+            alert("⚠️ Cụ vui lòng nhập hoặc nhấn mic để nói nội dung cần kiểm tra nhé!");
+            return;
+        }
+
+        // Tự động tắt mic nếu đang bật thu âm khi người dùng bấm gửi
+        if (isRecording) {
+            toggleVoiceInput();
+        }
+
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAA=');
+        silentAudio.play().catch(() => {});
+
+        const userDiv = document.createElement('div');
+        userDiv.className = 'message user-msg';
+        userDiv.innerText = text;
+        chatBody.appendChild(userDiv);
+
+        input.value = '';
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message bot-msg';
+        loadingDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cháu đang phân tích...';
+        chatBody.appendChild(loadingDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        try {
+            const response = await fetch('/api/check-scam', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            const savedDiaryEntry = await saveDiaryEntry(text, data);
+            const brakeAction = savedDiaryEntry
+                ? `<button class="speak-btn" style="background:#B91C1C;" onclick="openEmergencyBrake('${savedDiaryEntry.id}')"><i class="fa-solid fa-hand"></i> DỪNG LẠI, XỬ LÝ TỪNG BƯỚC</button>`
+                : "";
+            let replyFormatted = (data.reply || "").replace(/\n/g, '<br>');
+            let encodedReply = encodeURIComponent(data.reply || "");
+            let alertLevel = (data.alert_level || "green").toLowerCase();
+
+            let alertBox = "";
+
+            if (alertLevel === "red") {
+                alertBox = `
+                    <div class="alert-card alert-danger">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
+                            <b>CẢNH BÁO ĐỎ: NGUY HIỂM!</b>
+                        </div>
+                        <div>${replyFormatted}</div>
+                        ${brakeAction}
+                        <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                            <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
+                        </button>
+                         <button class="speak-btn"
+                            style="background:#DC2626;"
+                            onclick="sendAlertBySms('RED', '${encodedReply.replace(/'/g, "%27")}')">
+                            <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
+                        </button>
+                    </div>
+                `;
+            } else if (alertLevel === "orange") {
+                alertBox = `
+                    <div class="alert-card alert-warning">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
+                            <b>CẢNH BÁO CAM: ĐÁNG NGỜ!</b>
+                        </div>
+                        <div>${replyFormatted}</div>
+                        ${brakeAction}
+                        <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                            <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
+                        </button>
+                        <button class="speak-btn" style="background:#C2410C;"
+                            onclick="sendAlertBySms('ORANGE', '${encodedReply.replace(/'/g, "%27")}')">
+                            <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
+                        </button>
+                    </div>
+                `;
+            } else {
+                alertBox = `
+                    <div class="alert-card alert-safe">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-circle-check" style="font-size:20px;"></i>
+                            <b>CẢNH BÁO XANH: AN TOÀN!</b>
+                        </div>
+                        <div>${replyFormatted}</div>
+                        <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                            <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
+                        </button>
+                    </div>
+                `;
+            }
+
+            loadingDiv.innerHTML = alertBox;
+            speakText(encodedReply);
+
+        } catch (error) {
+            console.error("Lỗi kết nối Server:", error);
+            const errorMsg = "Chưa kết nối Server. Cụ tuyệt đối KHÔNG chuyển tiền nhé!";
+            let encodedError = encodeURIComponent(errorMsg);
+
+            loadingDiv.innerHTML = `
+                <div class="alert-card alert-danger">
+                    <i class="fa-solid fa-wifi"></i> ${errorMsg}
+                </div>
+            `;
+            speakText(encodedError);
+        }
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+
+/* 5. NHẬN DẠNG GIỌNG NÓI
+   Nói xong tự tắt mic.
+   Bấm mic lần nữa để nói tiếp, nối nội dung cũ.
+   Không làm lặp chữ trên điện thoại Samsung.
+*/
+
+let recognition = null;
+let isRecording = false;
+let baseTranscript = "";
+let finalTranscript = "";
+let interimTranscript = "";
+
+const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+
+    recognition.lang = "vi-VN";
+
+    // Mỗi lần bấm mic chỉ thực hiện một lượt nói.
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function () {
+        isRecording = true;
+
+        const micBtn = document.getElementById("micBtn");
+        const userInput = document.getElementById("userInput");
+
+        if (micBtn) {
+            micBtn.classList.add("recording");
+        }
+
+        if (userInput) {
+            userInput.placeholder =
+                "🎙️ Cụ cứ nói, nói xong mic tự tắt...";
+        }
+    };
+
+    recognition.onresult = function (event) {
+        const userInput = document.getElementById("userInput");
+        if (!userInput) return;
+
+        // Chỉ lấy kết quả của lượt nhận diện hiện tại.
+        let currentFinal = "";
+        let currentInterim = "";
+
+        for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (!result || !result[0]) continue;
+
+            if (result.isFinal) {
+                currentFinal += result[0].transcript;
+            } else {
+                currentInterim += result[0].transcript;
+            }
+        }
+
+        finalTranscript = currentFinal;
+        interimTranscript = currentInterim;
+
+        // Hiển thị nội dung cũ + nội dung vừa nói.
+        const newSpeech = (finalTranscript + " " + interimTranscript)
+            .replace(/\s+/g, " ")
+            .trim();
+
+        userInput.value = baseTranscript
+            ? baseTranscript + (newSpeech ? " " + newSpeech : "")
+            : newSpeech;
+
+        userInput.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+
+        userInput.scrollTop = userInput.scrollHeight;
+    };
+
+    recognition.onerror = function (event) {
+        console.warn("Lỗi nhận diện giọng nói:", event.error);
+
+        if (event.error === "not-allowed" ||
+            event.error === "service-not-allowed") {
+            alert("Cụ vui lòng cho phép Chrome sử dụng micro.");
+        } else if (event.error === "language-not-supported") {
+            alert("Thiết bị chưa hỗ trợ nhận diện tiếng Việt.");
+        } else if (event.error === "network") {
+            alert("Không kết nối được dịch vụ nhận diện. Cụ kiểm tra mạng nhé.");
+        }
+
+        stopRecordingState();
+    };
+
+    recognition.onend = function () {
+        const userInput = document.getElementById("userInput");
+
+        // Chốt nội dung đã nhận được trước khi kết thúc lượt nói.
+        if (userInput) {
+            const newSpeech = (finalTranscript + " " + interimTranscript)
+                .replace(/\s+/g, " ")
+                .trim();
+
+            userInput.value = baseTranscript
+                ? baseTranscript + (newSpeech ? " " + newSpeech : "")
+                : newSpeech;
+        }
+
+        // Tự tắt mic, giữ nguyên nội dung trong ô nhập.
+        stopRecordingState();
+    };
+}
+
+function toggleVoiceInput() {
+    if (!recognition) {
+        alert(
+            "Trình duyệt chưa hỗ trợ nhận diện giọng nói. " +
+            "Cụ hãy mở SafeAI bằng Chrome mới nhất hoặc nhập bằng bàn phím."
+        );
+        return;
+    }
+
+    const userInput = document.getElementById("userInput");
+
+    if (isRecording) {
+        try {
+            recognition.stop();
+        } catch (error) {
+            console.warn("Không dừng được mic:", error);
+        }
+
+        stopRecordingState();
+        return;
+    }
+
+    // Lưu nội dung đang có để lượt nói mới nối tiếp nội dung cũ.
+    baseTranscript = userInput ? userInput.value.trim() : "";
+    finalTranscript = "";
+    interimTranscript = "";
+
+    try {
+        recognition.start();
+    } catch (error) {
+        console.warn("Không bật được mic:", error);
+        stopRecordingState();
+        alert("Chưa bật được micro. Cụ chờ một chút rồi thử lại nhé.");
+    }
+}
+
+function stopRecordingState() {
+    isRecording = false;
+
+    const userInput = document.getElementById("userInput");
+    const micBtn = document.getElementById("micBtn");
+
+    if (userInput) {
+        userInput.placeholder = "Nhập hoặc nhấn mic để nói...";
+    }
+
+    if (micBtn) {
+        micBtn.classList.remove("recording");
+    }
+}
+
+
+/* 6. BÁO ĐỘNG SOS */
+function triggerSOS() {
+    const accountPhone = currentUserPhone;
+
+    if (!accountPhone) {
+        alert("⚠️ Cụ chưa đăng nhập tài khoản.");
+        return;
+    }
+
+    let phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
+    let phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+
+    const formatPhone = (phone) => {
+        let clean = phone.replace(/\D/g, "");
+        if (clean.startsWith("84")) {
+            clean = "0" + clean.slice(2);
+        }
+        return clean;
+    };
+
+    phone1 = formatPhone(phone1);
+    phone2 = formatPhone(phone2);
+
+    if (!phone1 && !phone2) {
+        alert("⚠️ Cụ chưa cài số người thân SOS.");
+        return;
+    }
+
+    if (phone1 && phone2) {
+        const choice = prompt(
+            "🚨 LIÊN HỆ KHẨN CẤP\n\n" +
+            "Nhập 1 → Người thân 1\n" +
+            "Nhập 2 → Người thân 2"
+        );
+
+        if (choice === "1") {
+            window.location.href = "https://zalo.me/" + phone1;
+        } else if (choice === "2") {
+            window.location.href = "https://zalo.me/" + phone2;
+        } else {
+            alert("⚠️ Cụ chưa chọn người thân hợp lệ.");
+        }
+    } else {
+        const phone = phone1 || phone2;
+
+        if (confirm("🚨 Mở Zalo để liên hệ người thân?")) {
+            window.location.href = "https://zalo.me/" + phone;
+        }
+    }
+}
+
+/* 6.1. GỬI CẢNH BÁO ĐỎ CHO NGƯỜI THÂN QUA ZALO */
+function sendAlertToZalo(level, message, advice) {
+    if (String(level).toLowerCase() !== "red") return;
+
+    const accountPhone = currentUserPhone;
+
+    if (!accountPhone) {
+        alert("Cụ vui lòng đăng nhập trước nhé!");
+        return;
+    }
+
+    const phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
+    const phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+
+    if (!phone1 && !phone2) {
+        alert("Cụ vui lòng vào Hồ sơ để đăng ký số điện thoại người thân.");
+        return;
+    }
+
+    let phone = phone1 || phone2;
+
+    if (phone1 && phone2) {
+        const choice = prompt(
+            "🚨 BÁO CẢNH BÁO ĐỎ QUA ZALO\n\n" +
+            "Nhập 1 → Người thân 1\n" +
+            "Nhập 2 → Người thân 2"
+        );
+
+        if (choice === "1") {
+            phone = phone1;
+        } else if (choice === "2") {
+            phone = phone2;
+        } else {
+            return;
+        }
+    }
+
+    const content =
+        "🚨 SAFEAI - CẢNH BÁO NGUY HIỂM\n\n" +
+        "Cụ vừa kiểm tra một nội dung có dấu hiệu lừa đảo mức ĐỎ.\n" +
+        "Người thân vui lòng gọi điện hỏi thăm và hỗ trợ cụ xác minh.\n\n" +
+        "Khuyến cáo: Không chuyển tiền, không cung cấp OTP hoặc mật khẩu khi chưa xác minh.";
+
+    const cleanPhone = phone.replace(/\D/g, "");
+    const zaloPhone = cleanPhone.startsWith("84")
+        ? "0" + cleanPhone.slice(2)
+        : cleanPhone;
+
+    if (!confirm(
+        "SafeAI sẽ mở Zalo để cụ liên hệ người thân.\n" +
+        "Cụ sẽ cần dán nội dung cảnh báo và tự bấm Gửi."
+    )) {
+        return;
+    }
+
+    window.open("https://zalo.me/" + zaloPhone, "_blank");
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(content)
+            .then(() => {
+                alert("Đã sao chép nội dung cảnh báo. Cụ hãy dán vào Zalo rồi bấm Gửi.");
+            })
+            .catch(() => {
+                prompt("Cụ hãy sao chép nội dung này để gửi qua Zalo:", content);
+            });
+    } else {
+        prompt("Cụ hãy sao chép nội dung này để gửi qua Zalo:", content);
+    }
+}
+
+
+
+/* GỬI CẢNH BÁO CHO NGƯỜI THÂN QUA ZALO
+   Hỗ trợ laptop và điện thoại */
+
+
+// GỬI CẢNH BÁO CHO CON CHÁU QUA ZALO
+
+
+async function sendAlertBySms(level, encodedAdvice) {
+    if (level !== "RED" && level !== "ORANGE") return;
+
+    const accountPhone = currentUserPhone;
+
+    if (!accountPhone) {
+        alert("Cụ vui lòng đăng nhập SafeAI trước nhé!");
+        return;
+    }
+
+    const phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
+    const phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+
+    const relatives = [phone1, phone2]
+        .map(phone => phone.trim())
+        .filter((phone, index, arr) => phone && arr.indexOf(phone) === index);
+
+    if (relatives.length === 0) {
+        alert("Cụ chưa lưu số điện thoại con cháu.\nVui lòng vào Hồ sơ để lưu số điện thoại nhé!");
+        return;
+    }
+
+    // Nếu chỉ có một số, tự chọn số đó.
+    // Nếu có hai số, cho cụ chọn người nhận.
+    let recipient = relatives[0];
+
+    if (relatives.length > 1) {
+        const choice = prompt(
+            "GỬI CẢNH BÁO CHO AI?\n\n" +
+            "Nhập 1: " + relatives[0] + "\n" +
+            "Nhập 2: " + relatives[1],
+            "1"
+        );
+
+        if (choice === null) return;
+
+        if (choice === "1") {
+            recipient = relatives[0];
+        } else if (choice === "2") {
+            recipient = relatives[1];
+        } else {
+            alert("Cụ vui lòng chọn số 1 hoặc số 2 nhé!");
+            return;
+        }
+    }
+
+    let advice = "";
+
+    try {
+        advice = decodeURIComponent(encodedAdvice || "");
+    } catch (error) {
+        advice = encodedAdvice || "";
+    }
+
+    const levelText = level === "RED"
+        ? "CẢNH BÁO ĐỎ - NGUY HIỂM"
+        : "CẢNH BÁO CAM - ĐÁNG NGỜ";
+
+    const message =
+        "🔔 SAFEAI CẢNH BÁO\n\n" +
+        levelText + "\n" +
+        "SafeAI phát hiện tin nhắn có dấu hiệu lừa đảo.\n\n" +
+        (advice ? "Nội dung phân tích: " + advice + "\n\n" : "") +
+        "Con/cháu vui lòng kiểm tra và hỗ trợ ông/bà nhé.\n" +
+        "Không chuyển tiền hoặc cung cấp OTP khi chưa xác minh.";
+
+    // Hiện xác nhận để cụ kiểm tra người nhận.
+    const agreed = confirm(
+        "GỬI CẢNH BÁO CHO CON CHÁU\n\n" +
+        "Số điện thoại: " + recipient + "\n\n" +
+        "SafeAI sẽ sao chép nội dung cảnh báo và mở Zalo.\n" +
+        "Cụ đồng ý tiếp tục chứ?"
+    );
+
+    if (!agreed) return;
+
+    // Mở cửa sổ ngay khi cụ xác nhận để giảm nguy cơ
+    // trình duyệt chặn cửa sổ bật lên.
+    const zaloWindow = window.open("about:blank", "_blank");
+
+    if (!zaloWindow) {
+        alert(
+            "Trình duyệt đang chặn Zalo.\n" +
+            "Cụ vui lòng cho phép mở cửa sổ mới rồi thử lại nhé."
+        );
+        return;
+    }
+
+    // Chuẩn hóa số điện thoại Việt Nam.
+    let cleanPhone = recipient.replace(/\D/g, "");
+
+    if (cleanPhone.startsWith("0084")) {
+        cleanPhone = "0" + cleanPhone.slice(4);
+    } else if (cleanPhone.startsWith("84")) {
+        cleanPhone = "0" + cleanPhone.slice(2);
+    }
+
+    let copied = false;
+
+    // Sao chép trước khi chuyển cửa sổ sang Zalo.
+    try {
+        await navigator.clipboard.writeText(message);
+        copied = true;
+    } catch (error) {
+        console.warn("Không thể tự sao chép nội dung:", error);
+    }
+
+    // Mở liên kết Zalo theo số người nhận.
+    zaloWindow.location.href = "https://zalo.me/" + cleanPhone;
+
+    if (copied) {
+        setTimeout(() => {
+            alert(
+                "ĐÃ CHUẨN BỊ NỘI DUNG CẢNH BÁO!\n\n" +
+                "1. Trong Zalo, mở cuộc trò chuyện với con/cháu.\n" +
+                "2. Nhấn vào ô soạn tin và chọn DÁN.\n" +
+                "3. Nhấn GỬI.\n\n" +
+                "Nội dung đã được sao chép sẵn."
+            );
+        }, 1000);
+    } else {
+        prompt(
+            "Cụ hãy sao chép nội dung dưới đây để gửi trong Zalo:",
+            message
+        );
+    }
+}
+
+    /* =========================================================
+       7. XỬ LÝ TẢI VÀ GIẢI MÃ ẢNH MÀN HÌNH (CHUẨN GIAO DIỆN ZALO)
+    ========================================================= */
+
+    // Hàm lấy thời gian hiện tại HH:MM (Giống file guianh.html)
+    function getCurrentTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    /* HÀM XỬ LÝ TẢI VÀ GỬI ẢNH CHÍNH */
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const chatBody = document.getElementById('chatBody');
+
+        // 1. Đọc file ảnh dưới dạng DataURL (Base64)
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            const base64Image = e.target.result;
+
+            // 2. Hiển thị tin nhắn ảnh của người dùng (Chuẩn cấu trúc guianh.html)
+            const userRow = document.createElement('div');
+            userRow.className = 'message user-msg';
+            userRow.style.padding = '4px';
+            userRow.style.background = 'transparent';
+            userRow.style.border = 'none';
+            userRow.style.boxShadow = 'none';
+
+            userRow.innerHTML = `
+                <div style="background: #0068FF; padding: 6px; border-radius: 12px; display: inline-block;">
+                    <img src="${base64Image}" style="max-width: 220px; max-height: 220px; border-radius: 8px; object-fit: cover; display: block;" alt="Ảnh tải lên">
+                    <div style="font-size: 10px; color: rgba(255, 255, 255, 0.8); margin-top: 4px; text-align: right;">${getCurrentTime()}</div>
+                </div>
+            `;
+            chatBody.appendChild(userRow);
+
+            // 3. Hiển thị khung chờ AI phân tích
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot-msg';
+            loadingDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cháu đang đọc chữ và phân tích ảnh...';
+            chatBody.appendChild(loadingDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            try {
+                // 4. Gửi Base64 sang API Backend Flask
+                const response = await fetch('/api/check-scam-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                const data = await response.json();
+                const savedDiaryEntry = await saveDiaryEntry(data.source_text || "Phân tích từ ảnh (không trích xuất được nội dung).", data);
+                const brakeAction = savedDiaryEntry
+                    ? `<button class="speak-btn" style="background:#B91C1C;" onclick="openEmergencyBrake('${savedDiaryEntry.id}')"><i class="fa-solid fa-hand"></i> DỪNG LẠI, XỬ LÝ TỪNG BƯỚC</button>`
+                    : "";
+                let replyFormatted = (data.reply || "").replace(/\n/g, '<br>');
+                let encodedReply = encodeURIComponent(data.reply || "");
+                let alertLevel = (data.alert_level || "green").toLowerCase();
+
+                let alertBox = "";
+
+                if (alertLevel === "red") {
+                    alertBox = `
+                        <div class="alert-card alert-danger">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
+                                <b>CẢNH BÁO ĐỎ: NGUY HIỂM!</b>
+                            </div>
+                            <div>${replyFormatted}</div>
+                            ${brakeAction}
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                                <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                                    <i class="fa-solid fa-volume-high"></i> Nghe lời khuyên
+                                </button>
+                                <button class="speak-btn" style="background:#DC2626;"
+                                    onclick="sendAlertBySms('RED', '${encodedReply.replace(/'/g, "%27")}')">
+                                    <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (alertLevel === "orange") {
+                    alertBox = `
+                        <div class="alert-card alert-warning">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
+                                <b>CẢNH BÁO CAM: ĐÁNG NGỜ!</b>
+                            </div>
+                            <div>${replyFormatted}</div>
+                            ${brakeAction}
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                                <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                                    <i class="fa-solid fa-volume-high"></i> Nghe lời khuyên
+                                </button>
+                                <button class="speak-btn" style="background:#C2410C;"
+                                    onclick="sendAlertBySms('ORANGE', '${encodedReply.replace(/'/g, "%27")}')">
+                                    <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
+
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    alertBox = `
+                        <div class="alert-card alert-safe">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-circle-check" style="font-size:20px;"></i>
+                                <b>CẢNH BÁO XANH: AN TOÀN!</b>
+                            </div>
+                            <div>${replyFormatted}</div>
+                            <button class="speak-btn" onclick="speakText('${encodedReply}')">
+                                <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
+                            </button>
+                        </div>
+                    `;
+                }
+
+                loadingDiv.innerHTML = alertBox;
+                speakText(encodedReply);
+
+            
+            } catch (error) {
+                console.error("Lỗi gửi ảnh:", error);
+                loadingDiv.innerHTML = `
+                    <div class="alert-card alert-danger">
+                        <i class="fa-solid fa-wifi"></i> Không thể phân tích ảnh lúc này. Cụ tuyệt đối KHÔNG chuyển tiền nhé!
+                    </div>
+                `;
+            }
+            chatBody.scrollTop = chatBody.scrollHeight;
+        };
+
+        reader.readAsDataURL(file);
+        event.target.value = ''; // Reset input để có thể chọn lại cùng 1 ảnh
+    }
+    /* 8. HỒ SƠ CỦA CỤ */
+    function openProfile() {
+        const accountPhone = currentUserPhone;
+
+        if (!accountPhone) {
+            alert("⚠️ Cụ chưa đăng nhập tài khoản.");
+            return;
+        }
+
+        document.getElementById("profile-account-phone").innerText = accountPhone;
+        document.getElementById("profile-phone1").value = localStorage.getItem("sos_phone1_" + accountPhone) || "";
+        document.getElementById("profile-phone2").value = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+
+        document.getElementById("profile-modal").style.display = "flex";
+    }
+
+    function closeProfile() {
+        document.getElementById("profile-modal").style.display = "none";
+    }
+
+    function saveProfile() {
+        const accountPhone = currentUserPhone;
+        if (!accountPhone) return;
+
+        const p1 = document.getElementById("profile-phone1").value.trim();
+        const p2 = document.getElementById("profile-phone2").value.trim();
+
+        localStorage.setItem("sos_phone1_" + accountPhone, p1);
+        localStorage.setItem("sos_phone2_" + accountPhone, p2);
+
+        alert("✅ Đã lưu số điện thoại người thân!");
+        closeProfile();
+    }
+</script>
+
+</body>
+</html>
