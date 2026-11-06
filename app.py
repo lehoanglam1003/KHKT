@@ -1,6 +1,7 @@
 import os
 import base64
 import hashlib
+import hmac
 import ipaddress
 import re
 import io
@@ -18,6 +19,7 @@ from urllib.parse import urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 from dotenv import load_dotenv
 import requests
+from cryptography.fernet import Fernet, InvalidToken
 from flask import Flask, jsonify, request, render_template, session
 from groq import Groq
 from google import genai
@@ -45,6 +47,22 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(days=14),
     MAX_CONTENT_LENGTH=12 * 1024 * 1024,
 )
+
+
+def contact_cipher():
+    secret = app.config["SECRET_KEY"]
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+    key = base64.urlsafe_b64encode(hashlib.sha256(b"SafeAI emergency contacts v1\0" + secret).digest())
+    return Fernet(key)
+
+
+def encrypt_contact(phone):
+    return contact_cipher().encrypt(phone.encode("utf-8")).decode("ascii")
+
+
+def decrypt_contact(token):
+    return contact_cipher().decrypt(token.encode("ascii")).decode("utf-8")
 
 
 @app.errorhandler(413)
@@ -123,13 +141,46 @@ def init_db():
                 reported_at INTEGER NOT NULL,
                 PRIMARY KEY (phone, reporter_phone)
             );
+            CREATE TABLE IF NOT EXISTS emergency_contacts (
+                user_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                slot INTEGER NOT NULL CHECK (slot IN (1, 2)),
+                contact_phone TEXT NOT NULL,
+                PRIMARY KEY (user_phone, slot)
+            );
+            CREATE TABLE IF NOT EXISTS family_links (
+                owner_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                member_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                status TEXT NOT NULL CHECK (status IN ('pending', 'accepted')),
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY (owner_phone, member_phone)
+            );
+            CREATE TABLE IF NOT EXISTS campaign_reports (
+                kind TEXT NOT NULL CHECK (kind IN ('url', 'message')),
+                fingerprint TEXT NOT NULL,
+                reporter_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                category TEXT NOT NULL,
+                reported_at INTEGER NOT NULL,
+                PRIMARY KEY (kind, fingerprint, reporter_phone)
+            );
+            CREATE TABLE IF NOT EXISTS training_progress (
+                user_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                scenario_id TEXT NOT NULL,
+                best_score INTEGER NOT NULL DEFAULT 0,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                completed_at INTEGER NOT NULL,
+                PRIMARY KEY (user_phone, scenario_id)
+            );
             CREATE INDEX IF NOT EXISTS phone_reports_phone_idx ON phone_reports(phone);
+            CREATE INDEX IF NOT EXISTS family_links_member_idx ON family_links(member_phone, status);
+            CREATE INDEX IF NOT EXISTS campaign_reports_fingerprint_idx ON campaign_reports(kind, fingerprint);
             CREATE INDEX IF NOT EXISTS diary_entries_created_idx
                 ON diary_entries(user_phone, created_at DESC);
         """)
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(diary_entries)")}
         if "checklist" not in columns:
             connection.execute("ALTER TABLE diary_entries ADD COLUMN checklist TEXT NOT NULL DEFAULT '[]'")
+        if "shared" not in columns:
+            connection.execute("ALTER TABLE diary_entries ADD COLUMN shared INTEGER NOT NULL DEFAULT 0")
 
 
 def normalize_phone(value):
@@ -191,7 +242,21 @@ def login_required(handler):
     return wrapped
 
 
+def twilio_configured():
+    return all(os.getenv(key, "").strip() for key in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID"))
+
+
+def demo_otp_enabled():
+    return os.getenv("OTP_DEMO_MODE", "true").strip().lower() not in ("false", "0", "no")
+
+
+def generate_demo_otp():
+    return str(secrets.randbelow(900000) + 100000)
+
+
 def send_twilio_otp(phone):
+    if not twilio_configured() and demo_otp_enabled():
+        return {"status": "demo", "code": generate_demo_otp()}
     account_sid = os.getenv("TWILIO_ACCOUNT_SID")
     auth_token = os.getenv("TWILIO_AUTH_TOKEN")
     service_sid = os.getenv("TWILIO_VERIFY_SERVICE_SID")
@@ -258,10 +323,31 @@ def diary_row_to_dict(row):
         "notes": row["notes"],
         "events": events,
         "checklist": checklist,
+        "shared": bool(row["shared"]) if "shared" in row.keys() else False,
     }
 
 
 init_db()
+
+
+@app.route('/api/system/status', methods=['GET'])
+def system_status():
+    with get_db() as connection:
+        counts = {
+            "users": connection.execute("SELECT COUNT(*) AS total FROM users").fetchone()["total"],
+            "diary_entries": connection.execute("SELECT COUNT(*) AS total FROM diary_entries").fetchone()["total"],
+            "family_links": connection.execute("SELECT COUNT(*) AS total FROM family_links").fetchone()["total"],
+            "reports": connection.execute("SELECT COUNT(*) AS total FROM phone_reports").fetchone()["total"],
+        }
+    otp_mode = "demo" if (not twilio_configured() and demo_otp_enabled()) else "twilio"
+    return jsonify({
+        "otp_mode": otp_mode,
+        "demo_mode": otp_mode == "demo",
+        "message": "Mã OTP demo đang được dùng trong môi trường phát triển. Khi cấu hình Twilio, app tự động chuyển sang SMS thật.",
+        "counts": counts,
+    })
+
+
 # === THÊM ROUTE TRANG CHỦ TẠI ĐÂY ===
 @app.route('/')
 def home():
@@ -278,7 +364,7 @@ def request_auth_otp():
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
 
-    if mode not in ("login", "register"):
+    if mode not in ("login", "register", "reset"):
         return jsonify({"error": "Yêu cầu đăng nhập không hợp lệ."}), 400
     if len(password) < 8 or len(password) > 128:
         return jsonify({"error": "Mật khẩu cần có từ 8 đến 128 ký tự."}), 400
@@ -289,14 +375,22 @@ def request_auth_otp():
             return jsonify({"error": "Số điện thoại này đã có tài khoản. Hãy đăng nhập."}), 409
         if mode == "login" and (not user or not check_password_hash(user["password_hash"], password)):
             return jsonify({"error": "Số điện thoại hoặc mật khẩu chưa đúng."}), 401
+        if mode == "reset" and not user:
+            session.clear()
+            session["pending_auth_mode"] = "reset"
+            return jsonify({"message": "Nếu số điện thoại đã đăng ký, mã xác minh sẽ được gửi qua SMS."})
 
         now = int(time.time())
         cooldown = connection.execute("SELECT requested_at FROM otp_cooldowns WHERE phone = ?", (phone,)).fetchone()
         if cooldown and now - cooldown["requested_at"] < 60:
+            if mode == "reset":
+                session.clear()
+                session["pending_auth_mode"] = "reset"
+                return jsonify({"message": "Nếu số điện thoại đã đăng ký, mã xác minh sẽ được gửi qua SMS."})
             return jsonify({"error": "Vui lòng chờ 60 giây trước khi yêu cầu mã mới."}), 429
 
         challenge_id = secrets.token_urlsafe(32)
-        password_hash = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16) if mode == "register" else None
+        password_hash = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16) if mode in ("register", "reset") else None
         connection.execute(
             "INSERT INTO otp_challenges (id, phone, mode, password_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
             (challenge_id, phone, mode, password_hash, now + 300, now),
@@ -306,16 +400,42 @@ def request_auth_otp():
             (phone, now),
         )
 
+    demo_code = None
     try:
-        send_twilio_otp(phone)
+        if not twilio_configured() and demo_otp_enabled():
+            demo_code = generate_demo_otp()
+        else:
+            send_twilio_otp(phone)
     except RuntimeError as error:
         with get_db() as connection:
             connection.execute("DELETE FROM otp_challenges WHERE id = ?", (challenge_id,))
+            connection.execute(
+                "DELETE FROM otp_cooldowns WHERE phone = ? AND requested_at = ?",
+                (phone, now),
+            )
+        if mode == "reset":
+            session.clear()
+            session["pending_auth_mode"] = "reset"
+            return jsonify({"message": "Nếu số điện thoại đã đăng ký, mã xác minh sẽ được gửi qua SMS."})
         return jsonify({"error": str(error)}), 503
 
     session.clear()
     session["pending_otp_id"] = challenge_id
-    return jsonify({"message": "Mã xác minh đã được gửi qua SMS."})
+    session["pending_auth_mode"] = mode
+    if demo_code:
+        session["pending_demo_code"] = demo_code
+        session["pending_demo_phone"] = phone
+    if mode == "reset":
+        payload = {"message": "Nếu số điện thoại đã đăng ký, mã xác minh sẽ được gửi qua SMS."}
+        if demo_code:
+            payload["message"] = f"Mã OTP demo đã được tạo. Mã xác minh: {demo_code}"
+            payload["demo_code"] = demo_code
+        return jsonify(payload)
+    payload = {"message": "Mã xác minh đã được gửi qua SMS."}
+    if demo_code:
+        payload["message"] = f"Mã OTP demo đã được tạo. Mã xác minh: {demo_code}"
+        payload["demo_code"] = demo_code
+    return jsonify(payload)
 
 
 @app.route('/api/auth/verify-otp', methods=['POST'])
@@ -323,19 +443,26 @@ def verify_auth_otp():
     challenge_id = session.get("pending_otp_id")
     code = str((request.get_json(silent=True) or {}).get("code") or "").strip()
     if not challenge_id or not re.fullmatch(r"\d{4,10}", code):
-        return jsonify({"error": "Mã xác minh chưa đúng hoặc đã hết hạn."}), 400
+        status_code = 401 if session.get("pending_auth_mode") == "reset" else 400
+        return jsonify({"error": "Mã xác minh chưa đúng hoặc đã hết hạn."}), status_code
 
     now = int(time.time())
     with get_db() as connection:
         challenge = connection.execute("SELECT * FROM otp_challenges WHERE id = ?", (challenge_id,)).fetchone()
     if not challenge or challenge["expires_at"] < now:
         session.pop("pending_otp_id", None)
-        return jsonify({"error": "Mã xác minh đã hết hạn. Hãy yêu cầu mã mới."}), 400
+        session.pop("pending_auth_mode", None)
+        status_code = 401 if challenge and challenge["mode"] == "reset" else 400
+        return jsonify({"error": "Mã xác minh đã hết hạn. Hãy yêu cầu mã mới."}), status_code
 
-    try:
-        verified = verify_twilio_otp(challenge["phone"], code)
-    except RuntimeError as error:
-        return jsonify({"error": str(error)}), 503
+    demo_code = session.get("pending_demo_code")
+    if demo_code and code == demo_code and challenge["phone"] == session.get("pending_demo_phone", challenge["phone"]):
+        verified = True
+    else:
+        try:
+            verified = verify_twilio_otp(challenge["phone"], code)
+        except RuntimeError as error:
+            return jsonify({"error": str(error)}), 503
     if not verified:
         return jsonify({"error": "Mã xác minh chưa đúng hoặc đã hết hạn."}), 401
 
@@ -350,6 +477,15 @@ def verify_auth_otp():
                 connection.execute("DELETE FROM otp_challenges WHERE id = ?", (challenge_id,))
                 session.pop("pending_otp_id", None)
                 return jsonify({"error": "Số điện thoại này đã có tài khoản. Hãy đăng nhập."}), 409
+        elif challenge["mode"] == "reset":
+            updated = connection.execute(
+                "UPDATE users SET password_hash = ? WHERE phone = ?",
+                (challenge["password_hash"], challenge["phone"]),
+            )
+            if not updated.rowcount:
+                connection.execute("DELETE FROM otp_challenges WHERE id = ?", (challenge_id,))
+                session.clear()
+                return jsonify({"error": "Mã xác minh chưa đúng hoặc đã hết hạn."}), 401
         elif not connection.execute("SELECT 1 FROM users WHERE phone = ?", (challenge["phone"],)).fetchone():
             return jsonify({"error": "Tài khoản không còn tồn tại."}), 401
         connection.execute("DELETE FROM otp_challenges WHERE id = ?", (challenge_id,))
@@ -564,6 +700,323 @@ def manage_phone_report():
     return jsonify(get_phone_report_summary(phone, reporter_phone)), 201
 
 
+CAMPAIGN_REPORT_CATEGORIES = {
+    **PHONE_REPORT_CATEGORIES,
+    "scam_pattern": "Kịch bản lừa đảo đã gặp",
+}
+
+
+def campaign_fingerprint(kind, value):
+    if kind == "url":
+        canonical = normalize_lookup_url(value)
+    elif kind == "message":
+        canonical = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", str(value or "")).casefold()).strip()
+        if len(canonical) < 20 or len(canonical) > 5000:
+            raise ValueError("Nội dung cần có từ 20 đến 5.000 ký tự để đối chiếu.")
+    else:
+        raise ValueError("Loại dữ liệu tra cứu không hợp lệ.")
+    secret = app.config["SECRET_KEY"]
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+    return hmac.new(secret, (kind + "\0" + canonical).encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def get_campaign_report_summary(kind, value, reporter_phone):
+    if kind == "phone":
+        summary = get_phone_report_summary(value, reporter_phone)
+        summary["kind"] = kind
+        return summary
+
+    fingerprint = campaign_fingerprint(kind, value)
+    with get_db() as connection:
+        total = connection.execute(
+            "SELECT COUNT(*) FROM campaign_reports WHERE kind = ? AND fingerprint = ?",
+            (kind, fingerprint),
+        ).fetchone()[0]
+        category_rows = connection.execute(
+            "SELECT category, COUNT(*) AS count FROM campaign_reports WHERE kind = ? AND fingerprint = ? GROUP BY category",
+            (kind, fingerprint),
+        ).fetchall()
+        own_report = connection.execute(
+            "SELECT category FROM campaign_reports WHERE kind = ? AND fingerprint = ? AND reporter_phone = ?",
+            (kind, fingerprint, reporter_phone),
+        ).fetchone()
+    return {
+        "kind": kind,
+        "report_count": total,
+        "confidence": "none" if total == 0 else "few" if total < 3 else "multiple",
+        "categories": [
+            {"category": row["category"], "label": CAMPAIGN_REPORT_CATEGORIES.get(row["category"], "Khác"), "count": row["count"]}
+            for row in category_rows
+        ],
+        "reported_by_me": own_report["category"] if own_report else None,
+    }
+
+
+@app.route('/api/lookup/campaign', methods=['POST'])
+@login_required
+def lookup_campaign_reports():
+    data = request.get_json(silent=True) or {}
+    kind = data.get("kind")
+    value = data.get("value")
+    try:
+        if kind == "phone":
+            value = normalize_phone(value)
+        elif kind not in ("url", "message"):
+            raise ValueError("Loại dữ liệu tra cứu không hợp lệ.")
+        summary = get_campaign_report_summary(kind, value, session["user_phone"])
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    return jsonify(summary)
+
+
+@app.route('/api/lookup/campaign/report', methods=['POST', 'DELETE'])
+@login_required
+def manage_campaign_report():
+    data = request.get_json(silent=True) or {}
+    kind = data.get("kind")
+    value = data.get("value")
+    reporter_phone = session["user_phone"]
+    try:
+        if kind == "phone":
+            value = normalize_phone(value)
+        elif kind in ("url", "message"):
+            fingerprint = campaign_fingerprint(kind, value)
+        else:
+            raise ValueError("Loại báo cáo không hợp lệ.")
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+    if kind == "phone":
+        if request.method == 'DELETE':
+            with get_db() as connection:
+                connection.execute(
+                    "DELETE FROM phone_reports WHERE phone = ? AND reporter_phone = ?",
+                    (value, reporter_phone),
+                )
+            return jsonify(get_phone_report_summary(value, reporter_phone))
+        category = data.get("category")
+        if category not in PHONE_REPORT_CATEGORIES:
+            return jsonify({"error": "Hãy chọn một lý do báo cáo hợp lệ."}), 400
+        with get_db() as connection:
+            existing = connection.execute(
+                "SELECT 1 FROM phone_reports WHERE phone = ? AND reporter_phone = ?",
+                (value, reporter_phone),
+            ).fetchone()
+            report_count = connection.execute(
+                "SELECT COUNT(*) FROM phone_reports WHERE reporter_phone = ? AND reported_at >= ?",
+                (reporter_phone, int(time.time()) - 86400),
+            ).fetchone()[0]
+            if not existing and report_count >= 20:
+                return jsonify({"error": "Mỗi tài khoản có thể gửi tối đa 20 báo cáo mỗi ngày."}), 429
+            connection.execute(
+                "INSERT INTO phone_reports (phone, reporter_phone, category, reported_at) VALUES (?, ?, ?, ?) ON CONFLICT(phone, reporter_phone) DO UPDATE SET category = excluded.category, reported_at = excluded.reported_at",
+                (value, reporter_phone, category, int(time.time())),
+            )
+        return jsonify(get_phone_report_summary(value, reporter_phone)), 201
+
+    if request.method == 'DELETE':
+        with get_db() as connection:
+            connection.execute(
+                "DELETE FROM campaign_reports WHERE kind = ? AND fingerprint = ? AND reporter_phone = ?",
+                (kind, fingerprint, reporter_phone),
+            )
+        return jsonify(get_campaign_report_summary(kind, value, reporter_phone))
+
+    category = data.get("category")
+    if category not in CAMPAIGN_REPORT_CATEGORIES:
+        return jsonify({"error": "Hãy chọn một lý do báo cáo hợp lệ."}), 400
+    now = int(time.time())
+    with get_db() as connection:
+        existing = connection.execute(
+            "SELECT 1 FROM campaign_reports WHERE kind = ? AND fingerprint = ? AND reporter_phone = ?",
+            (kind, fingerprint, reporter_phone),
+        ).fetchone()
+        report_count = connection.execute(
+            "SELECT COUNT(*) FROM campaign_reports WHERE reporter_phone = ? AND reported_at >= ?",
+            (reporter_phone, now - 86400),
+        ).fetchone()[0]
+        if not existing and report_count >= 20:
+            return jsonify({"error": "Mỗi tài khoản có thể gửi tối đa 20 báo cáo mỗi ngày."}), 429
+        connection.execute(
+            "INSERT INTO campaign_reports (kind, fingerprint, reporter_phone, category, reported_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(kind, fingerprint, reporter_phone) DO UPDATE SET category = excluded.category, reported_at = excluded.reported_at",
+            (kind, fingerprint, reporter_phone, category, now),
+        )
+    return jsonify(get_campaign_report_summary(kind, value, reporter_phone)), 201
+
+
+@app.route('/api/profile/contacts', methods=['GET', 'PUT'])
+@login_required
+def manage_emergency_contacts():
+    user_phone = session["user_phone"]
+    if request.method == 'GET':
+        contacts = ["", ""]
+        with get_db() as connection:
+            rows = connection.execute(
+                "SELECT slot, contact_phone FROM emergency_contacts WHERE user_phone = ? ORDER BY slot",
+                (user_phone,),
+            ).fetchall()
+        for row in rows:
+            try:
+                contacts[row["slot"] - 1] = decrypt_contact(row["contact_phone"])
+            except (InvalidToken, UnicodeDecodeError, ValueError):
+                return jsonify({"error": "Không giải mã được danh bạ. Hãy khôi phục FLASK_SECRET_KEY trước khi dùng lại."}), 503
+        return jsonify({"contacts": contacts})
+
+    data = request.get_json(silent=True) or {}
+    contacts = data.get("contacts")
+    if not isinstance(contacts, list) or len(contacts) > 2:
+        return jsonify({"error": "Chỉ lưu được tối đa hai số người thân."}), 400
+    normalized_contacts = []
+    try:
+        for value in contacts:
+            if str(value or "").strip():
+                phone = normalize_phone(value)
+                if phone == user_phone:
+                    raise ValueError("Số liên hệ phải khác số tài khoản của Cụ.")
+                if phone not in normalized_contacts:
+                    normalized_contacts.append(phone)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    with get_db() as connection:
+        connection.execute("DELETE FROM emergency_contacts WHERE user_phone = ?", (user_phone,))
+        connection.executemany(
+            "INSERT INTO emergency_contacts (user_phone, slot, contact_phone) VALUES (?, ?, ?)",
+            [(user_phone, slot, encrypt_contact(phone)) for slot, phone in enumerate(normalized_contacts, 1)],
+        )
+    return jsonify({"contacts": normalized_contacts + [""] * (2 - len(normalized_contacts))})
+
+
+@app.route('/api/family', methods=['GET'])
+@login_required
+def list_family_links():
+    user_phone = session["user_phone"]
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT owner_phone, member_phone, status, created_at FROM family_links WHERE owner_phone = ? OR member_phone = ? ORDER BY created_at DESC",
+            (user_phone, user_phone),
+        ).fetchall()
+    sent = [{"phone": row["member_phone"], "status": row["status"]} for row in rows if row["owner_phone"] == user_phone]
+    received = [{"phone": row["owner_phone"], "status": row["status"]} for row in rows if row["member_phone"] == user_phone and row["status"] == "pending"]
+    connected = [
+        row["member_phone"] if row["owner_phone"] == user_phone else row["owner_phone"]
+        for row in rows if row["status"] == "accepted"
+    ]
+    return jsonify({"sent": sent, "received": received, "connected": connected})
+
+
+@app.route('/api/family/invitations', methods=['POST'])
+@login_required
+def create_family_invitation():
+    try:
+        member_phone = normalize_phone((request.get_json(silent=True) or {}).get("phone"))
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    owner_phone = session["user_phone"]
+    if member_phone == owner_phone:
+        return jsonify({"error": "Hãy nhập số điện thoại của người thân."}), 400
+    now = int(time.time())
+    with get_db() as connection:
+        if not connection.execute("SELECT 1 FROM users WHERE phone = ?", (member_phone,)).fetchone():
+            return jsonify({"error": "Người thân cần tạo và xác minh tài khoản SafeAI trước khi nhận lời mời."}), 404
+        existing = connection.execute(
+            "SELECT status FROM family_links WHERE owner_phone = ? AND member_phone = ?",
+            (owner_phone, member_phone),
+        ).fetchone()
+        if existing and existing["status"] == "accepted":
+            return jsonify({"error": "Hai tài khoản đã được liên kết."}), 409
+        connection.execute(
+            "INSERT INTO family_links (owner_phone, member_phone, status, created_at) VALUES (?, ?, 'pending', ?) ON CONFLICT(owner_phone, member_phone) DO UPDATE SET status = 'pending', created_at = excluded.created_at",
+            (owner_phone, member_phone, now),
+        )
+    return jsonify({"message": "Đã gửi lời mời. Người thân cần đăng nhập và chấp nhận."}), 201
+
+
+@app.route('/api/family/invitations/respond', methods=['POST'])
+@login_required
+def respond_family_invitation():
+    data = request.get_json(silent=True) or {}
+    try:
+        owner_phone = normalize_phone(data.get("ownerPhone"))
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    accept = data.get("accept")
+    if not isinstance(accept, bool):
+        return jsonify({"error": "Lựa chọn chấp nhận lời mời chưa hợp lệ."}), 400
+    with get_db() as connection:
+        if accept:
+            cursor = connection.execute(
+                "UPDATE family_links SET status = 'accepted' WHERE owner_phone = ? AND member_phone = ? AND status = 'pending'",
+                (owner_phone, session["user_phone"]),
+            )
+        else:
+            cursor = connection.execute(
+                "DELETE FROM family_links WHERE owner_phone = ? AND member_phone = ? AND status = 'pending'",
+                (owner_phone, session["user_phone"]),
+            )
+        if not cursor.rowcount:
+            return jsonify({"error": "Không tìm thấy lời mời đang chờ."}), 404
+    return jsonify({"accepted": accept})
+
+
+@app.route('/api/family/links/<phone>', methods=['DELETE'])
+@login_required
+def remove_family_link(phone):
+    try:
+        relative_phone = normalize_phone(phone)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    user_phone = session["user_phone"]
+    with get_db() as connection:
+        connection.execute(
+            "DELETE FROM family_links WHERE (owner_phone = ? AND member_phone = ?) OR (owner_phone = ? AND member_phone = ?)",
+            (user_phone, relative_phone, relative_phone, user_phone),
+        )
+    return jsonify({"removed": True})
+
+
+@app.route('/api/family/shared-diary', methods=['GET'])
+@login_required
+def list_shared_family_diary():
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT diary_entries.*, family_links.owner_phone AS shared_by FROM diary_entries JOIN family_links ON family_links.owner_phone = diary_entries.user_phone WHERE family_links.member_phone = ? AND family_links.status = 'accepted' AND diary_entries.shared = 1 ORDER BY diary_entries.created_at DESC LIMIT 100",
+            (session["user_phone"],),
+        ).fetchall()
+    return jsonify({
+        "entries": [{**diary_row_to_dict(row), "sharedBy": row["shared_by"]} for row in rows]
+    })
+
+
+TRAINING_SCENARIO_IDS = {"otp_request", "fake_investment", "family_impersonation", "remote_access"}
+
+
+@app.route('/api/training/progress', methods=['GET', 'POST'])
+@login_required
+def training_progress():
+    user_phone = session["user_phone"]
+    if request.method == 'GET':
+        with get_db() as connection:
+            rows = connection.execute(
+                "SELECT scenario_id, best_score, attempts, completed_at FROM training_progress WHERE user_phone = ?",
+                (user_phone,),
+            ).fetchall()
+        return jsonify({"progress": [dict(row) for row in rows]})
+
+    data = request.get_json(silent=True) or {}
+    scenario_id = data.get("scenarioId")
+    score = data.get("score")
+    if scenario_id not in TRAINING_SCENARIO_IDS or isinstance(score, bool) or not isinstance(score, int) or not 0 <= score <= 100:
+        return jsonify({"error": "Kết quả luyện tập chưa hợp lệ."}), 400
+    now = int(time.time())
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO training_progress (user_phone, scenario_id, best_score, attempts, completed_at) VALUES (?, ?, ?, 1, ?) ON CONFLICT(user_phone, scenario_id) DO UPDATE SET best_score = MAX(training_progress.best_score, excluded.best_score), attempts = training_progress.attempts + 1, completed_at = excluded.completed_at",
+            (user_phone, scenario_id, score, now),
+        )
+    return jsonify({"saved": True}), 201
+
+
 DIARY_STATUSES = {"no_action", "clicked_link", "shared_info", "shared_otp", "installed_app", "transferred_money", "handled"}
 DIARY_LEVELS = {"red", "orange", "green"}
 DIARY_CHECKLISTS = {
@@ -632,7 +1085,7 @@ def create_diary_entry():
     events = [{"at": created_at, "text": "AI đã phân tích nội dung và tạo hồ sơ nhật ký."}]
     with get_db() as connection:
         connection.execute(
-            "INSERT INTO diary_entries (id, user_phone, created_at, source_text, reply, alert_level, status, notes, events, checklist) VALUES (?, ?, ?, ?, ?, ?, 'no_action', '', ?, '[]')",
+            "INSERT INTO diary_entries (id, user_phone, created_at, source_text, reply, alert_level, status, notes, events, checklist, shared) VALUES (?, ?, ?, ?, ?, ?, 'no_action', '', ?, '[]', 0)",
             (entry_id, session["user_phone"], created_at, source_text, reply, level, json.dumps(events, ensure_ascii=False)),
         )
     return jsonify({"id": entry_id}), 201
@@ -660,7 +1113,7 @@ def import_diary_entries():
             status = item.get("status") if item.get("status") in DIARY_STATUSES else "no_action"
             events = item.get("events") if isinstance(item.get("events"), list) else []
             connection.execute(
-                "INSERT OR IGNORE INTO diary_entries (id, user_phone, created_at, source_text, reply, alert_level, status, notes, events, checklist) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO diary_entries (id, user_phone, created_at, source_text, reply, alert_level, status, notes, events, checklist, shared) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
                 (entry_id, session["user_phone"], created_at, source_text, str(item.get("reply") or "")[:12000], level, status, str(item.get("notes") or "")[:2000], json.dumps(events[:100], ensure_ascii=False), "[]"),
             )
             imported += connection.execute("SELECT changes()").fetchone()[0]
@@ -680,6 +1133,7 @@ def update_or_delete_diary_entry(entry_id):
     status = data.get("status")
     notes = str(data.get("notes") or "")[:2000]
     checklist = data.get("checklist", [])
+    shared = data.get("shared")
     if status not in DIARY_STATUSES:
         return jsonify({"error": "Tình trạng nhật ký không hợp lệ."}), 400
     allowed_checklist = DIARY_CHECKLISTS[status]
@@ -688,11 +1142,15 @@ def update_or_delete_diary_entry(entry_id):
     checklist = sorted(set(checklist))
     with get_db() as connection:
         row = connection.execute(
-            "SELECT status, notes, events, checklist FROM diary_entries WHERE id = ? AND user_phone = ?",
+            "SELECT status, notes, events, checklist, shared FROM diary_entries WHERE id = ? AND user_phone = ?",
             (entry_id, phone),
         ).fetchone()
         if not row:
             return jsonify({"error": "Không tìm thấy hồ sơ nhật ký."}), 404
+        if shared is None:
+            shared = bool(row["shared"])
+        elif not isinstance(shared, bool):
+            return jsonify({"error": "Tùy chọn chia sẻ chưa hợp lệ."}), 400
         try:
             events = json.loads(row["events"] or "[]")
         except json.JSONDecodeError:
@@ -718,8 +1176,8 @@ def update_or_delete_diary_entry(entry_id):
         if changes:
             events.append({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "text": ". ".join(changes)})
         connection.execute(
-            "UPDATE diary_entries SET status = ?, notes = ?, events = ?, checklist = ? WHERE id = ? AND user_phone = ?",
-            (status, notes, json.dumps(events[-100:], ensure_ascii=False), json.dumps(checklist), entry_id, phone),
+            "UPDATE diary_entries SET status = ?, notes = ?, events = ?, checklist = ?, shared = ? WHERE id = ? AND user_phone = ?",
+            (status, notes, json.dumps(events[-100:], ensure_ascii=False), json.dumps(checklist), int(shared), entry_id, phone),
         )
     return jsonify({"updated": True})
 
@@ -1044,6 +1502,7 @@ Nếu nội dung hợp lý và không có dấu hiệu lừa đảo rõ ràng:
 """
 
 @app.route('/api/check-scam', methods=['POST'])
+@login_required
 def check_scam():
     try:
         data = request.get_json(silent=True)
@@ -1218,6 +1677,7 @@ def analyze_ocr_text(extracted_text):
 
 
 @app.route('/api/check-scam-image', methods=['POST'])
+@login_required
 def check_scam_image():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):

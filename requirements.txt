@@ -5,3 +5,4 @@ groq
 gunicorn
 google-genai
 requests
+cryptography

@@ -27,9 +27,21 @@ Phân tích ảnh trực quan cần `GEMINI_API_KEY`; có thể đổi model b�
 
 Tra cứu số điện thoại dựa trên báo cáo cộng đồng của người dùng đã xác minh OTP. Mỗi tài khoản chỉ có một báo cáo cho mỗi số và có thể gỡ báo cáo; hệ thống chỉ hiển thị tổng hợp, không hiển thị danh tính người báo. Đây không phải cơ sở dữ liệu chính thức và có thể có báo cáo sai.
 
+### Vòng tròn người thân và quyền riêng tư
+
+Số liên hệ SOS được đồng bộ theo tài khoản và mã hóa bằng Fernet với khóa suy ra từ `FLASK_SECRET_KEY`. Hãy đặt khóa ổn định, đủ mạnh và giữ bản sao an toàn; đổi khóa sẽ khiến các số đã mã hóa không thể đọc lại. Người thân phải có tài khoản đã xác minh OTP và tự chấp nhận lời mời. Nhật ký luôn riêng tư theo mặc định; chỉ hồ sơ được chủ tài khoản bật chia sẻ mới xuất hiện với người thân đã liên kết. Gỡ liên kết sẽ thu hồi quyền xem.
+
+### QR và dấu vết cộng đồng
+
+Ảnh được giải mã QR trên trình duyệt bằng `jsQR` tải từ jsDelivr. QR không tự mở; nếu là URL, URL được gửi đến Google Safe Browsing khi tính năng đã cấu hình. Nếu thư viện QR không tải được, ứng dụng báo chưa giải mã thay vì coi ảnh là an toàn. Báo cáo link và nội dung tin nhắn chỉ lưu fingerprint có khóa, không lưu nguyên văn qua luồng báo cáo. Đối chiếu tin nhắn hiện nhận diện nội dung trùng sau chuẩn hóa cơ bản, chưa nhận ra các biến thể được viết lại. Báo cáo cộng đồng chỉ là tín hiệu tham khảo; người dùng có thể gỡ báo cáo của mình.
+
+### Luyện tập và hướng dẫn
+
+Mục **Luyện tập** có các tình huống mô phỏng; điểm tốt nhất và số lần làm được lưu theo tài khoản. Trong **Phanh khẩn cấp**, trình duyệt có thể đọc từng bước nếu thiết bị có giọng tiếng Việt. Các tính năng này không tự gọi ngân hàng, người thân hoặc cơ quan chức năng.
+
 Khi phân tích có cảnh báo đỏ/cam, người dùng có thể mở **Phanh khẩn cấp** để chọn điều đã xảy ra, làm checklist theo tình huống và lưu tiến độ vào nhật ký. Nút gọi người thân chỉ mở ứng dụng gọi sau khi người dùng xác nhận. SafeAI không tự khóa giao dịch, không gọi ngân hàng/cơ quan chức năng và không thay thế hướng dẫn chính thức của họ.
 
-Tài khoản mới cần xác minh mã OTP trước khi tạo. Mật khẩu được băm ở máy chủ; không lưu mật khẩu đăng nhập trong trình duyệt. Nhật ký cũ của trình duyệt chỉ được nhập sau khi số điện thoại tương ứng xác minh thành công.
+Tài khoản mới cần xác minh mã OTP trước khi tạo. Nếu quên mật khẩu, chọn **Quên mật khẩu?**, nhập số điện thoại và mật khẩu mới, sau đó xác minh OTP SMS; mật khẩu chỉ được cập nhật sau khi mã hợp lệ. Phản hồi yêu cầu reset không tiết lộ số điện thoại có tài khoản hay không. Mật khẩu được băm ở máy chủ; không lưu mật khẩu đăng nhập trong trình duyệt. Nhật ký cũ của trình duyệt chỉ được nhập sau khi số điện thoại tương ứng xác minh thành công.
 
 ### Triển khai
 

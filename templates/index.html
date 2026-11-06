@@ -55,16 +55,118 @@
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             border: 4px solid #334155;
+            position: relative;
+        }
+
+        .splash-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #0f3a7a 45%, #0068FF 100%);
+            z-index: 20000;
+            transition: opacity 0.7s ease, visibility 0.7s ease;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-card {
+            text-align: center;
+            color: white;
+        }
+
+        .splash-icon {
+            width: 92px;
+            height: 92px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 18px;
+            border-radius: 28px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.28);
+            box-shadow: 0 18px 38px rgba(0,0,0,0.18);
+            font-size: 38px;
+            backdrop-filter: blur(4px);
+        }
+
+        .splash-card h2 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            margin-bottom: 8px;
+        }
+
+        .splash-card p {
+            font-size: 14px;
+            opacity: 0.9;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .splash-spinner {
+            width: 62px;
+            height: 62px;
+            margin: 22px auto 0;
+            border: 4px solid rgba(255,255,255,0.25);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .app-loading {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.30);
+            backdrop-filter: blur(3px);
+            z-index: 1000;
+        }
+
+        .app-loading.visible {
+            display: flex;
+        }
+
+        .loading-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 14px 28px rgba(15,23,42,0.18);
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .loading-pill .mini-spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(15,23,42,0.2);
+            border-top-color: #0068FF;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
         }
 
         .zalo-header {
-            background: linear-gradient(135deg, #0068FF, #0043A8);
+            background: linear-gradient(135deg, #0068FF, #0043A8, #0f7ae5);
             color: white;
-            padding: 16px;
+            padding: 16px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 104, 255, 0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.12);
         }
 
         .header-title {
@@ -76,30 +178,49 @@
         }
 
         .sos-btn {
-            background: var(--danger-color);
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-weight: 800;
             font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 7px;
+            box-shadow: 0 10px 20px rgba(239,68,68,0.3);
             animation: pulse 2s infinite;
+            letter-spacing: 0.02em;
         }
 
         .security-banner {
-            background: #E0F2FE;
-            border-bottom: 1px solid #BAE6FD;
-            padding: 8px 16px;
+            background: linear-gradient(90deg, #dcfce7, #ecfeff, #eff6ff);
+            border-bottom: 1px solid #c7d2fe;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
-            color: #0369A1;
-            font-weight: 600;
+            font-size: 12px;
+            color: #0f172a;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .demo-mode-flag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
         .status-dot {
@@ -389,6 +510,74 @@
             margin: 8px 0 22px;
         }
 
+        .system-status-banner {
+            display: none;
+            width: 100%;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #E0F2FE;
+            color: #075985;
+            border: 1px solid #7DD3FC;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .system-status-banner.visible {
+            display: block;
+        }
+
+        .system-overview {
+            display: none;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .system-overview.visible {
+            display: grid;
+        }
+
+        .system-overview .stat-pill {
+            background: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 10px;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 11px;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .system-overview .stat-pill strong {
+            display: block;
+            font-size: 18px;
+            color: #0068FF;
+        }
+
+        .otp-copy-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+            border: 1px solid #0F766E;
+            background: #F0FDFA;
+            color: #115E59;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .otp-copy-btn.visible {
+            display: inline-flex;
+        }
+
         .login-box input {
             width: 100%;
             height: 52px;
@@ -447,6 +636,15 @@
             color: #DC2626;
             font-size: 14px;
             font-weight: 600;
+            min-height: 20px;
+        }
+
+        #login-message.success {
+            color: #166534;
+        }
+
+        #login-message.info {
+            color: #075985;
         }
 
         /* HỘP HỒ SƠ */
@@ -464,6 +662,8 @@
         .profile-box {
             width: 100%;
             max-width: 380px;
+            max-height: 92vh;
+            overflow-y: auto;
             background: white;
             border-radius: 24px;
             padding: 25px 22px;
@@ -486,6 +686,25 @@
             line-height: 1.5;
             margin-bottom: 20px;
         }
+
+        .family-section {
+            margin: 15px 0;
+            padding-top: 14px;
+            border-top: 1px solid #E2E8F0;
+        }
+
+        .family-section h3 { margin-bottom: 5px; font-size: 16px; color: #0F766E; }
+        .family-section p { margin-bottom: 9px; color: #475569; font-size: 13px; line-height: 1.45; }
+        .family-invite-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
+        .family-invite-row input { min-width: 0; height: 42px; padding: 0 9px; border: 1px solid #94A3B8; border-radius: 6px; font-size: 15px; }
+        .family-list { display: grid; gap: 8px; margin-top: 10px; }
+        .family-row { padding: 9px; border: 1px solid #CBD5E1; border-radius: 6px; background: #F8FAFC; }
+        .family-row strong { display: block; overflow-wrap: anywhere; }
+        .family-row small { display: block; margin-top: 3px; color: #475569; }
+        .family-row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+        .family-row-actions button { min-height: 38px; padding: 7px 9px; border: 0; border-radius: 6px; background: #0F766E; color: white; font-weight: 700; }
+        .family-row-actions button.danger { background: #FEF2F2; color: #B91C1C; border: 1px solid #FCA5A5; }
+        .family-status { min-height: 20px; margin-top: 7px; color: #475569; font-size: 13px; }
 
         .profile-label {
             display: block;
@@ -684,9 +903,52 @@
         .brake-button.secondary { background: #334155; }
         .brake-button:disabled { opacity: 0.65; cursor: wait; }
 
+        .brake-guide-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .brake-guide-status { min-height: 22px; margin-top: 7px; color: #475569; font-size: 14px; }
+
+        .feature-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 13000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.76);
+        }
+
+        .feature-panel {
+            width: min(100%, 560px);
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 18px;
+            border-radius: 12px;
+            background: white;
+            color: #1E293B;
+        }
+
+        .feature-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .feature-heading h2 { font-size: 20px; }
+        .feature-close { width: 40px; height: 40px; border: 0; border-radius: 6px; background: #E2E8F0; font-size: 22px; }
+        .training-progress { margin: 0 0 12px; color: #475569; }
+        .training-prompt { margin: 12px 0; font-size: 18px; font-weight: 700; line-height: 1.45; }
+        .training-choices { display: grid; gap: 8px; }
+        .training-choice { min-height: 48px; padding: 10px; border: 1px solid #94A3B8; border-radius: 6px; background: #F8FAFC; color: #1E293B; text-align: left; font: inherit; }
+        .training-choice:disabled { opacity: 0.7; }
+        .training-feedback { min-height: 56px; margin-top: 10px; line-height: 1.5; }
+        .shared-entry { padding: 11px 0; border-top: 1px solid #CBD5E1; }
+        .shared-entry h3 { font-size: 16px; }
+        .shared-entry p { margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .campaign-tools { display: grid; gap: 7px; margin-top: 9px; padding-top: 8px; border-top: 1px solid #CBD5E1; }
+        .campaign-tools select { min-height: 40px; padding: 6px; border: 1px solid #94A3B8; border-radius: 6px; background: white; }
+        .campaign-summary { color: #475569; font-size: 13px; line-height: 1.45; }
+        .qr-result { margin-top: 9px; padding: 9px; border: 1px solid #CBD5E1; border-radius: 6px; overflow-wrap: anywhere; font-size: 14px; }
+        .qr-result.danger { border-color: #FCA5A5; background: #FEF2F2; color: #991B1B; }
+
         @media (max-width: 380px) {
             .brake-panel { padding: 14px; }
             .brake-buttons { grid-template-columns: 1fr; }
+            .brake-guide-controls { grid-template-columns: 1fr; }
         }
 
         .diary-toolbar {
@@ -920,6 +1182,8 @@
             .diary-modal { padding: 0; }
             .diary-panel { max-height: 100vh; height: 100%; border-radius: 0; }
             .diary-heading h2 { font-size: 18px; }
+            .feature-modal { padding: 0; }
+            .feature-panel { max-height: 100vh; height: 100%; border-radius: 0; }
         }
     </style>
 </head>
@@ -935,19 +1199,41 @@
         <h1>SafeAI</h1>
         <p class="login-subtitle">Trợ lý an toàn AI</p>
         <p class="login-desc">Bảo vệ Cụ trước các tin nhắn lừa đảo</p>
+        <div id="system-status-banner" class="system-status-banner" aria-live="polite"></div>
+        <div id="system-overview" class="system-overview" aria-live="polite"></div>
         <input type="tel" id="login-phone" placeholder="📱 Số điện thoại" maxlength="15">
         <input type="password" id="login-password" placeholder="🔐 Mật khẩu">
         <button class="login-btn" id="login-submit" onclick="loginUser()">
             <i class="fa-solid fa-right-to-bracket"></i> ĐĂNG NHẬP
         </button>
         <button class="login-secondary-btn" id="register-submit" onclick="registerUser()">TẠO TÀI KHOẢN</button>
+        <button class="login-secondary-btn" id="forgot-password-submit" onclick="beginPasswordReset()">QUÊN MẬT KHẨU?</button>
         <p class="login-otp-note" id="login-otp-note">Nhập mã OTP được gửi đến số điện thoại của Cụ.</p>
         <input type="text" id="login-otp" inputmode="numeric" autocomplete="one-time-code" placeholder="Mã OTP" maxlength="10" style="display:none;">
         <button class="login-btn" id="verify-otp-submit" onclick="verifyLoginOtp()" style="display:none;">
             <i class="fa-solid fa-shield-check"></i> XÁC MINH OTP
         </button>
         <button class="login-secondary-btn" id="resend-otp-submit" onclick="resendLoginOtp()" style="display:none;">GỬI LẠI MÃ OTP</button>
+        <button class="otp-copy-btn" id="otp-copy-btn" type="button" onclick="copyOtpCode()">
+            <i class="fa-solid fa-copy"></i> COPY MÃ OTP
+        </button>
         <div id="login-message"></div>
+    </div>
+</div>
+
+<div id="splash-screen" class="splash-screen" aria-live="polite">
+    <div class="splash-card">
+        <div class="splash-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2>SafeAI</h2>
+        <p>Loading...</p>
+        <div class="splash-spinner" aria-hidden="true"></div>
+    </div>
+</div>
+
+<div id="app-loading" class="app-loading" aria-live="polite">
+    <div class="loading-pill">
+        <span class="mini-spinner"></span>
+        <span>Đang tải dữ liệu...</span>
     </div>
 </div>
 
@@ -971,6 +1257,18 @@
         <label class="profile-label">📞 Người thân 2</label>
         <input type="tel" id="profile-phone2" class="profile-input" placeholder="Nhập số điện thoại người thân 2" maxlength="15">
 
+        <section class="family-section" aria-labelledby="family-title">
+            <h3 id="family-title">Vòng tròn người thân</h3>
+            <p>Người thân cần có tài khoản SafeAI và phải chấp nhận lời mời. Nhật ký chỉ chia sẻ từng hồ sơ khi Cụ bật chia sẻ.</p>
+            <div class="family-invite-row">
+                <input type="tel" id="family-phone" placeholder="Số tài khoản người thân" maxlength="15" aria-label="Số tài khoản người thân">
+                <button class="lookup-button" type="button" onclick="inviteFamilyMember()">MỜI</button>
+            </div>
+            <div id="family-status" class="family-status" aria-live="polite"></div>
+            <div id="family-list" class="family-list"></div>
+            <button class="lookup-button" type="button" style="width:100%;margin-top:9px" onclick="openSharedDiary()">XEM NHẬT KÝ ĐƯỢC CHIA SẺ</button>
+        </section>
+
         <div class="profile-buttons">
             <button class="profile-close-btn" onclick="closeProfile()">ĐÓNG</button>
             <button class="profile-save-btn" onclick="saveProfile()">
@@ -985,14 +1283,19 @@
 
 <!-- PHANH KHAN CAP -->
 <div id="brake-modal" class="brake-modal" role="dialog" aria-modal="true" aria-labelledby="brake-title">
-    <section class="brake-panel">
-        <h2 class="brake-heading" id="brake-title"><i class="fa-solid fa-hand"></i> Dừng lại, xử lý từng bước</h2>
+    <section class="brake-panel" tabindex="-1">
+        <h2 class="brake-heading" id="brake-title" tabindex="-1"><i class="fa-solid fa-hand"></i> Dừng lại, xử lý từng bước</h2>
         <div class="brake-caution">Chưa chuyển thêm tiền, không cung cấp OTP/mật khẩu và không cài ứng dụng theo hướng dẫn của người lạ.</div>
         <p class="brake-limit-note">SafeAI không thể khóa giao dịch hoặc gọi ngân hàng thay Cụ. Nếu đã chuyển tiền/lộ OTP, hãy tự gọi ngân hàng qua số trên thẻ hoặc ứng dụng chính thức ngay.</p>
         <label class="brake-label" for="brake-status">Cụ đã làm đến bước nào?</label>
         <select id="brake-status" class="brake-status-select"></select>
         <div id="brake-next-step" class="brake-next-step"></div>
         <div id="brake-checklist" class="brake-checklist"></div>
+        <div class="brake-guide-controls">
+            <button class="brake-button" type="button" onclick="startEmergencyGuide()"><i class="fa-solid fa-volume-high"></i> NGHE TỪNG BƯỚC</button>
+            <button class="brake-button secondary" type="button" onclick="nextEmergencyGuideStep()">BƯỚC TIẾP</button>
+        </div>
+        <div id="brake-guide-status" class="brake-guide-status" aria-live="polite"></div>
         <div id="brake-message" class="lookup-muted" aria-live="polite"></div>
         <div id="brake-family-actions" class="brake-buttons"></div>
         <div class="brake-buttons">
@@ -1017,6 +1320,27 @@
     </section>
 </div>
 
+<div id="shared-diary-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="shared-diary-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="shared-diary-title">Nhật ký người thân chia sẻ</h2>
+            <button class="feature-close" type="button" onclick="closeSharedDiary()" aria-label="Đóng">&times;</button>
+        </div>
+        <div id="shared-diary-list" aria-live="polite"></div>
+    </section>
+</div>
+
+<div id="training-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="training-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="training-title">Tập nhận biết lừa đảo</h2>
+            <button class="feature-close" type="button" onclick="closeTraining()" aria-label="Đóng">&times;</button>
+        </div>
+        <p id="training-progress" class="training-progress"></p>
+        <div id="training-content"></div>
+    </section>
+</div>
+
 <!-- GIAO DIỆN SAFEAI -->
 <div class="mobile-frame">
     <!-- Header -->
@@ -1035,14 +1359,17 @@
 
     <!-- Security Banner -->
     <div class="security-banner">
-        <span class="status-dot"></span> Hệ thống đang bảo vệ 24/7 trước các kịch bản lừa đảo
+        <span class="status-dot"></span>
+        <span>Sẵn sàng kiểm tra tin nhắn, đường link và ảnh khi Cụ gửi lên</span>
+        <span class="demo-mode-flag" id="demo-mode-flag">Demo mode</span>
     </div>
 
     <div class="diary-toolbar">
         <span id="diary-count">Chưa có lượt kiểm tra nào được lưu</span>
-        <button class="diary-open-btn" onclick="openDiary()">
-            <i class="fa-solid fa-book-open"></i> Nhật ký
-        </button>
+        <div class="family-row-actions">
+            <button class="diary-open-btn" onclick="openTraining()"><i class="fa-solid fa-graduation-cap"></i> Luyện tập</button>
+            <button class="diary-open-btn" onclick="openDiary()"><i class="fa-solid fa-book-open"></i> Nhật ký</button>
+        </div>
     </div>
 
     <!-- Chat Body -->
@@ -1062,7 +1389,7 @@
                 <input type="text" id="lookup-input" maxlength="2048" placeholder="Dán link hoặc số điện thoại cần tra cứu" aria-label="Link hoặc số điện thoại cần tra cứu">
                 <button class="lookup-button" onclick="lookupIndicator()"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</button>
             </div>
-            <p class="lookup-note">Tra link sẽ gửi URL, gồm cả tham số truy vấn, tới Google Safe Browsing; tránh link riêng tư. Tra số dùng báo cáo cộng đồng, chưa đủ căn cứ kết luận.</p>
+            <p class="lookup-note">Tra link gửi URL tới Google Safe Browsing. QR được giải mã trên thiết bị; không tự mở link. Chỉ báo cáo cộng đồng sau khi xác nhận.</p>
             <div id="lookup-result" class="lookup-result" aria-live="polite"></div>
         </div>
 
@@ -1088,12 +1415,18 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
     let currentUserPhone = null;
     let diaryEntriesCache = [];
     let pendingAuthMode = null;
     let activeEmergencyEntry = null;
     let activeEmergencyActions = new Set();
+    let emergencyContacts = ["", ""];
+    let emergencyGuideSteps = [];
+    let emergencyGuideIndex = 0;
+    let trainingProgressCache = {};
+    let trainingScenarioIndex = 0;
 
     async function loginUser() {
         await requestAuthOtp("login");
@@ -1103,11 +1436,27 @@
         await requestAuthOtp("register");
     }
 
+    async function beginPasswordReset() {
+        document.getElementById("login-password").placeholder = "Mật khẩu mới (8-128 ký tự)";
+        await requestAuthOtp("reset");
+    }
+
+    function setLoginMessage(text, tone = "error") {
+        const message = document.getElementById("login-message");
+        message.textContent = text;
+        message.classList.remove("success", "info");
+        if (tone === "success") message.classList.add("success");
+        if (tone === "info") message.classList.add("info");
+    }
+
     async function requestAuthOtp(mode) {
         const phone = document.getElementById("login-phone").value.trim();
         const password = document.getElementById("login-password").value;
-        const message = document.getElementById("login-message");
-        message.textContent = "Đang gửi yêu cầu...";
+        const otpField = document.getElementById("login-otp");
+        const copyButton = document.getElementById("otp-copy-btn");
+        setLoginMessage("Đang gửi yêu cầu...", "info");
+        copyButton.classList.remove("visible");
+        copyButton.dataset.code = "";
         try {
             const response = await fetch("/api/auth/request-otp", {
                 method: "POST",
@@ -1117,16 +1466,43 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Không thể gửi mã OTP.");
             pendingAuthMode = mode;
-            document.getElementById("login-otp-note").style.display = "block";
-            document.getElementById("login-otp").style.display = "block";
+            const otpNote = document.getElementById("login-otp-note");
+            otpNote.textContent = mode === "reset"
+                ? "Nếu số này đã đăng ký, mã OTP sẽ được gửi. Nhập mật khẩu mới ở trên rồi xác minh mã."
+                : "Nhập mã OTP được gửi đến số điện thoại của Cụ.";
+            otpNote.style.display = "block";
+            otpField.style.display = "block";
             document.getElementById("verify-otp-submit").style.display = "block";
             document.getElementById("resend-otp-submit").style.display = "block";
             document.getElementById("login-submit").style.display = "none";
             document.getElementById("register-submit").style.display = "none";
-            message.textContent = data.message;
-            document.getElementById("login-otp").focus();
+            document.getElementById("forgot-password-submit").style.display = "none";
+            if (data.demo_code) {
+                otpField.value = data.demo_code;
+                copyButton.dataset.code = data.demo_code;
+                copyButton.classList.add("visible");
+                setLoginMessage(`${data.message} Mã demo: ${data.demo_code}`, "info");
+            } else {
+                setLoginMessage(data.message, "success");
+            }
+            otpField.focus();
         } catch (error) {
-            message.textContent = error.message || "Không kết nối được máy chủ.";
+            setLoginMessage(error.message || "Không kết nối được máy chủ.", "error");
+        }
+    }
+
+    async function copyOtpCode() {
+        const copyButton = document.getElementById("otp-copy-btn");
+        const code = copyButton.dataset.code || document.getElementById("login-otp").value.trim();
+        if (!code) return;
+        try {
+            await navigator.clipboard.writeText(code);
+            const message = document.getElementById("login-message");
+            message.textContent = "Mã OTP đã được sao chép vào bộ nhớ tạm.";
+        } catch (error) {
+            console.warn("Không thể sao chép mã OTP:", error);
+            document.getElementById("login-otp").select();
+            document.getElementById("login-message").textContent = "Không thể sao chép tự động, vui lòng copy mã OTP trên màn hình.";
         }
     }
 
@@ -1136,9 +1512,8 @@
     }
 
     async function verifyLoginOtp() {
-        const message = document.getElementById("login-message");
         const code = document.getElementById("login-otp").value.trim();
-        message.textContent = "Đang xác minh...";
+        setLoginMessage("Đang xác minh...", "info");
         try {
             const response = await fetch("/api/auth/verify-otp", {
                 method: "POST",
@@ -1147,9 +1522,13 @@
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Mã OTP không hợp lệ.");
+            const wasPasswordReset = pendingAuthMode === "reset";
             await completeAuthenticatedSession(data.phone);
+            if (wasPasswordReset) {
+                setLoginMessage("Mật khẩu đã được đặt lại thành công.", "success");
+            }
         } catch (error) {
-            message.textContent = error.message || "Không kết nối được máy chủ.";
+            setLoginMessage(error.message || "Không kết nối được máy chủ.", "error");
         }
     }
 
@@ -1172,6 +1551,12 @@
             await refreshDiaryEntries();
         } catch (error) {
             console.warn("Chưa tải được nhật ký từ máy chủ:", error);
+        }
+        try {
+            await refreshEmergencyContacts();
+            await refreshFamilyPanel();
+        } catch (error) {
+            console.warn("Chưa tải được thiết lập người thân:", error);
         }
     }
 
@@ -1209,6 +1594,7 @@
     }
 
     async function initializeAuth() {
+        showAppLoading(true);
         try {
             const response = await fetch("/api/auth/me");
             if (!response.ok) throw new Error("Chưa đăng nhập");
@@ -1217,7 +1603,14 @@
         } catch (error) {
             currentUserPhone = null;
             document.getElementById("login-screen").style.display = "flex";
+            await loadSystemStatus();
             updateDiaryCount();
+        } finally {
+            showAppLoading(false);
+            const splash = document.getElementById("splash-screen");
+            if (splash) {
+                setTimeout(() => splash.classList.add("hidden"), 350);
+            }
         }
     }
 
@@ -1229,6 +1622,7 @@
         }
         currentUserPhone = null;
         diaryEntriesCache = [];
+        emergencyContacts = ["", ""];
         closeProfile();
         closeDiary();
         document.getElementById("login-screen").style.display = "flex";
@@ -1241,15 +1635,229 @@
 
     function resetOtpForm() {
         pendingAuthMode = null;
+        document.getElementById("login-password").placeholder = "🔐 Mật khẩu";
         document.getElementById("login-otp-note").style.display = "none";
         document.getElementById("login-otp").style.display = "none";
         document.getElementById("verify-otp-submit").style.display = "none";
         document.getElementById("resend-otp-submit").style.display = "none";
+        document.getElementById("otp-copy-btn").classList.remove("visible");
+        document.getElementById("otp-copy-btn").dataset.code = "";
         document.getElementById("login-submit").style.display = "block";
         document.getElementById("register-submit").style.display = "block";
+        document.getElementById("forgot-password-submit").style.display = "block";
     }
 
-    window.addEventListener("DOMContentLoaded", initializeAuth);
+    function showAppLoading(show) {
+        const panel = document.getElementById("app-loading");
+        if (!panel) return;
+        panel.classList.toggle("visible", show);
+    }
+
+    async function loadSystemStatus() {
+        try {
+            const response = await fetch("/api/system/status");
+            if (!response.ok) return;
+            const data = await response.json();
+            const banner = document.getElementById("system-status-banner");
+            const overview = document.getElementById("system-overview");
+            const demoFlag = document.getElementById("demo-mode-flag");
+            if (!banner) return;
+            if (data.demo_mode) {
+                banner.textContent = "Chế độ demo: OTP được tạo trên máy để test app. Dùng Twilio thật khi triển khai production.";
+                banner.classList.add("visible");
+                if (demoFlag) demoFlag.style.display = "inline-flex";
+            } else {
+                banner.textContent = "Chế độ production: OTP đang dùng Twilio Verify.";
+                banner.classList.add("visible");
+                if (demoFlag) demoFlag.style.display = "none";
+            }
+            if (overview) {
+                const counts = data.counts || {};
+                overview.innerHTML = [
+                    `<div class="stat-pill"><strong>${counts.users ?? 0}</strong>Người dùng</div>`,
+                    `<div class="stat-pill"><strong>${counts.diary_entries ?? 0}</strong>Nhật ký</div>`,
+                    `<div class="stat-pill"><strong>${counts.reports ?? 0}</strong>Báo cáo</div>`
+                ].join("");
+                overview.classList.add("visible");
+            }
+        } catch (error) {
+            console.warn("Không tải được trạng thái hệ thống:", error);
+        }
+    }
+
+    function getEmergencyContacts() {
+        return emergencyContacts.filter(function (phone) { return phone; });
+    }
+
+    async function refreshEmergencyContacts() {
+        const response = await fetch("/api/profile/contacts");
+        if (!response.ok) throw new Error("Không tải được số người thân.");
+        const data = await response.json();
+        emergencyContacts = Array.isArray(data.contacts) ? data.contacts.slice(0, 2) : ["", ""];
+        if (!emergencyContacts.some(Boolean) && currentUserPhone) {
+            const legacyContacts = [1, 2].map(function (slot) {
+                return localStorage.getItem("sos_phone" + slot + "_" + currentUserPhone) || "";
+            });
+            if (legacyContacts.some(Boolean)) {
+                const migration = await fetch("/api/profile/contacts", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contacts: legacyContacts })
+                });
+                if (migration.ok) {
+                    emergencyContacts = (await migration.json()).contacts;
+                    legacyContacts.forEach(function (_phone, index) {
+                        localStorage.removeItem("sos_phone" + (index + 1) + "_" + currentUserPhone);
+                    });
+                }
+            }
+        }
+    }
+
+    async function refreshFamilyPanel() {
+        if (!currentUserPhone) return;
+        const response = await fetch("/api/family");
+        if (!response.ok) throw new Error("Không tải được vòng tròn người thân.");
+        const data = await response.json();
+        const list = document.getElementById("family-list");
+        list.replaceChildren();
+
+        (data.connected || []).forEach(function (phone) {
+            const row = document.createElement("div");
+            row.className = "family-row";
+            const title = document.createElement("strong");
+            title.textContent = phone;
+            const status = document.createElement("small");
+            status.textContent = "Đã liên kết; hồ sơ vẫn chỉ chia sẻ khi chủ tài khoản cho phép.";
+            const actions = document.createElement("div");
+            actions.className = "family-row-actions";
+            const remove = document.createElement("button");
+            remove.className = "danger";
+            remove.textContent = "Gỡ liên kết";
+            remove.addEventListener("click", function () { unlinkFamilyMember(phone); });
+            actions.appendChild(remove);
+            row.append(title, status, actions);
+            list.appendChild(row);
+        });
+
+        (data.sent || []).filter(function (item) { return item.status === "pending"; }).forEach(function (item) {
+            const row = document.createElement("div");
+            row.className = "family-row";
+            row.textContent = item.phone + " · Đang chờ người thân chấp nhận";
+            list.appendChild(row);
+        });
+
+        (data.received || []).forEach(function (item) {
+            const row = document.createElement("div");
+            row.className = "family-row";
+            const title = document.createElement("strong");
+            title.textContent = item.phone + " muốn liên kết với Cụ";
+            const actions = document.createElement("div");
+            actions.className = "family-row-actions";
+            [["Chấp nhận", true], ["Từ chối", false]].forEach(function ([label, accept]) {
+                const button = document.createElement("button");
+                button.textContent = label;
+                if (!accept) button.className = "danger";
+                button.addEventListener("click", function () { respondFamilyInvitation(item.phone, accept); });
+                actions.appendChild(button);
+            });
+            row.append(title, actions);
+            list.appendChild(row);
+        });
+
+        if (!list.childElementCount) {
+            const empty = document.createElement("div");
+            empty.className = "family-status";
+            empty.textContent = "Chưa có liên kết hoặc lời mời.";
+            list.appendChild(empty);
+        }
+    }
+
+    async function inviteFamilyMember() {
+        const phoneInput = document.getElementById("family-phone");
+        const status = document.getElementById("family-status");
+        try {
+            const response = await fetch("/api/family/invitations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone: phoneInput.value.trim() })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa gửi được lời mời.");
+            status.textContent = data.message;
+            phoneInput.value = "";
+            await refreshFamilyPanel();
+        } catch (error) {
+            status.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    async function respondFamilyInvitation(ownerPhone, accept) {
+        if (accept && !confirm("Khi chấp nhận, người gửi chỉ xem được các hồ sơ họ chủ động chia sẻ.")) return;
+        try {
+            const response = await fetch("/api/family/invitations/respond", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerPhone: ownerPhone, accept: accept })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa cập nhật được lời mời.");
+            await refreshFamilyPanel();
+        } catch (error) {
+            document.getElementById("family-status").textContent = error.message;
+        }
+    }
+
+    async function unlinkFamilyMember(phone) {
+        if (!confirm("Gỡ liên kết với tài khoản này? Các hồ sơ đã chia sẻ sẽ không còn hiển thị.")) return;
+        try {
+            const response = await fetch("/api/family/links/" + encodeURIComponent(phone), { method: "DELETE" });
+            if (!response.ok) throw new Error("Chưa gỡ được liên kết.");
+            await refreshFamilyPanel();
+        } catch (error) {
+            document.getElementById("family-status").textContent = error.message;
+        }
+    }
+
+    async function openSharedDiary() {
+        const modal = document.getElementById("shared-diary-modal");
+        const list = document.getElementById("shared-diary-list");
+        list.textContent = "Đang tải hồ sơ...";
+        modal.style.display = "flex";
+        try {
+            const response = await fetch("/api/family/shared-diary");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Không tải được hồ sơ.");
+            list.replaceChildren();
+            if (!data.entries.length) {
+                list.textContent = "Chưa có hồ sơ nào được chia sẻ với tài khoản này.";
+                return;
+            }
+            data.entries.forEach(function (entry) {
+                const article = document.createElement("article");
+                article.className = "shared-entry";
+                const heading = document.createElement("h3");
+                heading.textContent = "Cảnh báo " + String(entry.level || "orange").toUpperCase() + " · " + entry.sharedBy;
+                const source = document.createElement("p");
+                source.textContent = entry.sourceText;
+                const advice = document.createElement("p");
+                advice.textContent = entry.reply;
+                article.append(heading, source, advice);
+                list.appendChild(article);
+            });
+        } catch (error) {
+            list.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    function closeSharedDiary() {
+        document.getElementById("shared-diary-modal").style.display = "none";
+    }
+
+    window.addEventListener("DOMContentLoaded", async function () {
+        await loadSystemStatus();
+        await initializeAuth();
+    });
 
     let activePhoneLookup = "";
     const phoneReportCategories = {
@@ -1307,11 +1915,12 @@
                 body: JSON.stringify({ url: value })
             });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Chưa thể xác minh liên kết.");
-            renderUrlLookup(data);
+            if (!response.ok) showLookupMessage(data.error || "Chưa thể xác minh liên kết.", "lookup-muted");
+            else renderUrlLookup(data);
         } catch (error) {
             showLookupMessage(error.message || "Không kết nối được máy chủ tra cứu.", "lookup-muted");
         }
+        appendCampaignTools(result, "url", value, true);
     }
 
     function renderUrlLookup(data) {
@@ -1429,6 +2038,113 @@
         }
     }
 
+    function appendCampaignTools(target, kind, value, autoLookup) {
+        const widget = document.createElement("div");
+        widget.className = "campaign-tools";
+        const summary = document.createElement("div");
+        summary.className = "campaign-summary";
+        summary.textContent = kind === "message"
+            ? "Chỉ gửi nội dung lên để tạo fingerprint khi Cụ chọn đối chiếu; hệ thống không lưu nguyên văn."
+            : "Đối chiếu báo cáo cộng đồng; báo cáo là thông tin tham khảo, không phải kết luận chính thức.";
+        const actions = document.createElement("div");
+        actions.className = "lookup-report-actions";
+        const checkButton = document.createElement("button");
+        checkButton.className = "lookup-button";
+        checkButton.textContent = "ĐỐI CHIẾU DẤU VẾT CỘNG ĐỒNG";
+        checkButton.addEventListener("click", function () { loadCampaignSummary(kind, value, summary, actions); });
+        const category = document.createElement("select");
+        category.setAttribute("aria-label", "Lý do báo cáo");
+        Object.entries(phoneReportCategories).concat([["scam_pattern", "Kịch bản lừa đảo đã gặp"]]).forEach(function ([key, label]) {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = label;
+            category.appendChild(option);
+        });
+        const reportButton = document.createElement("button");
+        reportButton.className = "lookup-button";
+        reportButton.textContent = "BÁO CÁO ẨN DANH";
+        reportButton.addEventListener("click", async function () {
+            const consentText = kind === "message"
+                ? "SafeAI sẽ gửi nội dung này để tạo fingerprint có khóa; nội dung gốc không được lưu. Gửi báo cáo?"
+                : "Chỉ báo cáo nếu Cụ trực tiếp gặp dấu hiệu này. Báo cáo được gắn với tài khoản nhưng danh tính không hiển thị công khai. Tiếp tục?";
+            if (!confirm(consentText)) return;
+            try {
+                const response = await fetch("/api/lookup/campaign/report", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ kind: kind, value: value, category: category.value })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Chưa gửi được báo cáo.");
+                renderCampaignSummary(data, summary, actions, kind, value);
+            } catch (error) {
+                summary.textContent = error.message || "Không kết nối được máy chủ.";
+            }
+        });
+        actions.append(checkButton, category, reportButton);
+        widget.append(summary, actions);
+        target.appendChild(widget);
+        if (kind === "message" && String(value || "").trim().length < 20) {
+            checkButton.disabled = true;
+            reportButton.disabled = true;
+            summary.textContent = "Đoạn nội dung quá ngắn để đối chiếu chính xác.";
+        } else if (autoLookup) {
+            loadCampaignSummary(kind, value, summary, actions);
+        }
+    }
+
+    async function loadCampaignSummary(kind, value, summary, actions) {
+        summary.textContent = "Đang đối chiếu dấu vết cộng đồng...";
+        try {
+            const response = await fetch("/api/lookup/campaign", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ kind: kind, value: value })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa đối chiếu được.");
+            renderCampaignSummary(data, summary, actions, kind, value);
+        } catch (error) {
+            summary.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    function renderCampaignSummary(data, summary, actions, kind, value) {
+        summary.textContent = data.report_count === 0
+            ? "Chưa có báo cáo trùng khớp. Điều này không chứng minh nội dung an toàn."
+            : "Có " + data.report_count + " báo cáo trùng khớp. Đây là tín hiệu cộng đồng, chưa phải kết luận chính thức.";
+        if (data.reported_by_me) summary.textContent += " Cụ đã gửi báo cáo cho dấu vết này.";
+        if (Array.isArray(data.categories) && data.categories.length) {
+            summary.textContent += " Lý do thường gặp: " + data.categories.map(function (item) {
+                return item.label + " (" + item.count + ")";
+            }).join(", ") + ".";
+        }
+        if (data.reported_by_me) {
+            const removeButton = document.createElement("button");
+            removeButton.className = "lookup-button";
+            removeButton.textContent = "GỠ BÁO CÁO CỦA TÔI";
+            removeButton.addEventListener("click", async function () {
+                if (!confirm("Gỡ báo cáo của Cụ khỏi dấu vết này?")) return;
+                try {
+                    const response = await fetch("/api/lookup/campaign/report", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ kind: kind, value: value })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || "Chưa gỡ được báo cáo.");
+                    const widget = summary.closest(".campaign-tools");
+                    const parent = widget.parentElement;
+                    widget.remove();
+                    appendCampaignTools(parent, kind, value, true);
+                } catch (error) {
+                    summary.textContent = error.message || "Không kết nối được máy chủ.";
+                }
+            });
+            actions.replaceChildren(removeButton);
+        }
+    }
+
     const diaryStatuses = {
         no_action: "Chưa tương tác với người gửi",
         clicked_link: "Đã bấm liên kết, chưa nhập thông tin",
@@ -1513,7 +2229,7 @@
                 body: JSON.stringify(entry)
             });
             if (!response.ok) throw new Error("Máy chủ chưa lưu được nhật ký.");
-            const savedEntry = { ...entry, status: "no_action", notes: "", events: [], checklist: [] };
+            const savedEntry = { ...entry, status: "no_action", notes: "", events: [], checklist: [], shared: false };
             diaryEntriesCache.unshift(savedEntry);
             updateDiaryCount();
             return savedEntry;
@@ -1580,13 +2296,19 @@
         activeEmergencyActions = new Set(activeEmergencyEntry.checklist || []);
         statusSelect.onchange = function () {
             activeEmergencyActions = new Set();
+            emergencyGuideSteps = [];
+            emergencyGuideIndex = 0;
+            document.getElementById("brake-guide-status").textContent = "";
             renderEmergencyChecklist();
         };
         renderEmergencyChecklist();
         renderEmergencyContacts();
         document.getElementById("brake-message").textContent = "";
+        document.getElementById("brake-guide-status").textContent = "";
         document.getElementById("brake-modal").style.display = "flex";
-        document.getElementById("brake-save").focus();
+        const panel = document.querySelector("#brake-modal .brake-panel");
+        panel.scrollTop = 0;
+        panel.focus({ preventScroll: true });
     }
 
     function renderEmergencyChecklist() {
@@ -1611,14 +2333,160 @@
         });
     }
 
+    function startEmergencyGuide() {
+        const status = document.getElementById("brake-status").value;
+        const actions = diaryChecklists[status] || [];
+        emergencyGuideSteps = [
+            "Trước hết, " + recommendationFor({ ...activeEmergencyEntry, status: status }),
+            ...actions.map(function (action, index) { return "Bước " + (index + 1) + ". " + action.text; })
+        ];
+        emergencyGuideIndex = 0;
+        speakEmergencyGuideStep();
+    }
+
+    function speakEmergencyGuideStep() {
+        const status = document.getElementById("brake-guide-status");
+        if (!emergencyGuideSteps.length || emergencyGuideIndex >= emergencyGuideSteps.length) {
+            status.textContent = "Đã đọc hết các bước. Cụ có thể chọn nghe lại hoặc tự đánh dấu việc đã làm.";
+            return;
+        }
+        status.textContent = "Đang đọc " + (emergencyGuideIndex + 1) + "/" + emergencyGuideSteps.length;
+        speakText(emergencyGuideSteps[emergencyGuideIndex]);
+    }
+
+    function nextEmergencyGuideStep() {
+        if (!emergencyGuideSteps.length) {
+            startEmergencyGuide();
+            return;
+        }
+        emergencyGuideIndex += 1;
+        speakEmergencyGuideStep();
+    }
+
+    const trainingScenarios = [
+        {
+            id: "otp_request",
+            title: "Cuộc gọi xin mã OTP",
+            prompt: "Người tự xưng là nhân viên ngân hàng nói tài khoản có lỗi và yêu cầu đọc mã OTP vừa gửi.",
+            choices: [
+                { text: "Đọc mã để họ giúp khóa tài khoản", correct: false },
+                { text: "Không đọc mã; tự gọi số trên thẻ hoặc ứng dụng chính thức", correct: true }
+            ],
+            lesson: "Ngân hàng không cần Cụ đọc OTP qua điện thoại. Tự gọi lại số chính thức để kiểm tra."
+        },
+        {
+            id: "fake_investment",
+            title: "Đầu tư lợi nhuận chắc chắn",
+            prompt: "Một nhóm hứa lợi nhuận cao mỗi ngày nhưng yêu cầu nạp tiền trước để mở cấp thành viên.",
+            choices: [
+                { text: "Nạp thử một khoản nhỏ để kiểm tra", correct: false },
+                { text: "Dừng lại, không nạp tiền và hỏi người thân kiểm chứng", correct: true }
+            ],
+            lesson: "Lời hứa lợi nhuận chắc chắn kèm yêu cầu nạp trước là dấu hiệu rủi ro cao."
+        },
+        {
+            id: "family_impersonation",
+            title: "Người thân nhắn tin khẩn cấp",
+            prompt: "Một tài khoản lạ dùng ảnh đại diện giống cháu, nói mất điện thoại và xin chuyển tiền ngay.",
+            choices: [
+                { text: "Gọi vào số cũ đã lưu để xác minh trước", correct: true },
+                { text: "Chuyển tiền ngay vì đang khẩn cấp", correct: false }
+            ],
+            lesson: "Đừng dùng số hoặc đường link người lạ vừa gửi. Gọi người thân bằng số Cụ đã biết."
+        },
+        {
+            id: "remote_access",
+            title: "Cài ứng dụng để nhận hoàn tiền",
+            prompt: "Người gọi hướng dẫn cài ứng dụng lạ và bật chia sẻ màn hình để nhận tiền hoàn.",
+            choices: [
+                { text: "Không cài; ngắt liên lạc và gọi đơn vị qua kênh chính thức", correct: true },
+                { text: "Cài ứng dụng nhưng không mở ngân hàng", correct: false }
+            ],
+            lesson: "Ứng dụng điều khiển từ xa có thể cho người khác xem hoặc thao tác trên điện thoại."
+        }
+    ];
+
+    async function openTraining() {
+        document.getElementById("training-modal").style.display = "flex";
+        document.getElementById("training-content").textContent = "Đang tải tiến độ...";
+        try {
+            const response = await fetch("/api/training/progress");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Không tải được tiến độ.");
+            trainingProgressCache = Object.fromEntries((data.progress || []).map(function (item) { return [item.scenario_id, item]; }));
+            renderTrainingScenario();
+        } catch (error) {
+            document.getElementById("training-content").textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    function renderTrainingScenario() {
+        const scenario = trainingScenarios[trainingScenarioIndex];
+        const completeCount = trainingScenarios.filter(function (item) { return trainingProgressCache[item.id]; }).length;
+        document.getElementById("training-progress").textContent = "Đã hoàn thành " + completeCount + "/" + trainingScenarios.length + " tình huống";
+        const content = document.getElementById("training-content");
+        content.replaceChildren();
+        const heading = document.createElement("h3");
+        heading.textContent = scenario.title;
+        const promptText = document.createElement("p");
+        promptText.className = "training-prompt";
+        promptText.textContent = scenario.prompt;
+        const choices = document.createElement("div");
+        choices.className = "training-choices";
+        const feedback = document.createElement("div");
+        feedback.className = "training-feedback";
+        feedback.setAttribute("aria-live", "polite");
+        scenario.choices.forEach(function (choice) {
+            const button = document.createElement("button");
+            button.className = "training-choice";
+            button.textContent = choice.text;
+            button.addEventListener("click", async function () {
+                if (button.disabled) return;
+                choices.querySelectorAll("button").forEach(function (item) { item.disabled = true; });
+                const score = choice.correct ? 100 : 0;
+                feedback.textContent = (choice.correct ? "Đúng. " : "Chưa đúng. ") + scenario.lesson;
+                try {
+                    const response = await fetch("/api/training/progress", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ scenarioId: scenario.id, score: score })
+                    });
+                    if (!response.ok) throw new Error("Chưa lưu được tiến độ.");
+                    const previous = trainingProgressCache[scenario.id] || { attempts: 0, best_score: 0 };
+                    trainingProgressCache[scenario.id] = {
+                        attempts: previous.attempts + 1,
+                        best_score: Math.max(previous.best_score, score)
+                    };
+                    document.getElementById("training-progress").textContent = "Đã hoàn thành " + trainingScenarios.filter(function (item) { return trainingProgressCache[item.id]; }).length + "/" + trainingScenarios.length + " tình huống";
+                } catch (error) {
+                    feedback.textContent += " Kết quả chưa đồng bộ với tài khoản.";
+                }
+                const next = document.createElement("button");
+                next.className = "lookup-button";
+                next.style.width = "100%";
+                next.style.marginTop = "9px";
+                next.textContent = trainingScenarioIndex < trainingScenarios.length - 1 ? "TÌNH HUỐNG TIẾP THEO" : "LUYỆN LẠI TỪ ĐẦU";
+                next.addEventListener("click", function () {
+                    trainingScenarioIndex = (trainingScenarioIndex + 1) % trainingScenarios.length;
+                    renderTrainingScenario();
+                });
+                content.appendChild(next);
+            });
+            choices.appendChild(button);
+        });
+        content.append(heading, promptText, choices, feedback);
+    }
+
+    function closeTraining() {
+        document.getElementById("training-modal").style.display = "none";
+    }
+
     function renderEmergencyContacts() {
         const actions = document.getElementById("brake-family-actions");
         actions.replaceChildren();
-        const accountPhone = currentUserPhone;
-        const contacts = [
-            { label: "Gọi người thân 1", phone: localStorage.getItem("sos_phone1_" + accountPhone) || "" },
-            { label: "Gọi người thân 2", phone: localStorage.getItem("sos_phone2_" + accountPhone) || "" }
-        ].filter(function (contact) { return contact.phone.trim(); });
+        const contacts = getEmergencyContacts().map(function (phone, index) {
+            return { label: "Gọi người thân " + (index + 1), phone: phone };
+        });
 
         if (!contacts.length) {
             const setupButton = document.createElement("button");
@@ -1800,12 +2668,18 @@
             const notesInput = document.createElement("textarea");
             notesInput.placeholder = "Ví dụ: đã gọi ngân hàng lúc 14:30, mã tiếp nhận...";
             notesInput.value = entry.notes || "";
+            const shareLabel = document.createElement("label");
+            const shareCheckbox = document.createElement("input");
+            shareCheckbox.type = "checkbox";
+            shareCheckbox.checked = Boolean(entry.shared);
+            shareLabel.append(shareCheckbox, document.createTextNode(" Chia sẻ hồ sơ này với người thân đã liên kết"));
             const actions = document.createElement("div");
             actions.className = "diary-entry-actions";
             const saveButton = document.createElement("button");
             saveButton.className = "diary-save-btn";
             saveButton.textContent = "Lưu cập nhật";
             saveButton.addEventListener("click", async function () {
+                if (shareCheckbox.checked && !entry.shared && !confirm("Người thân đã liên kết sẽ xem được nội dung, lời khuyên, ghi chú và tiến độ của hồ sơ này. Chia sẻ hồ sơ?")) return;
                 try {
                     const response = await fetch(`/api/diary/${encodeURIComponent(entry.id)}`, {
                         method: "PUT",
@@ -1813,7 +2687,8 @@
                         body: JSON.stringify({
                             status: statusSelect.value,
                             notes: notesInput.value.trim(),
-                            checklist: Array.from(checkedActions)
+                            checklist: Array.from(checkedActions),
+                            shared: shareCheckbox.checked
                         })
                     });
                     if (!response.ok) throw new Error("Không lưu được cập nhật nhật ký.");
@@ -1838,7 +2713,7 @@
                 }
             });
             actions.append(saveButton, deleteButton);
-            form.append(statusLabel, statusSelect, notesLabel, notesInput, actions);
+            form.append(statusLabel, statusSelect, notesLabel, notesInput, shareLabel, actions);
             content.append(sourceLabel, source, adviceLabel, advice, recommend, timelineTitle, timeline, checklistTitle, checklistProgress, checklistContainer, form);
             details.append(summary, content);
             list.appendChild(details);
@@ -2080,6 +2955,7 @@ function speakText(inputData) {
             }
 
             loadingDiv.innerHTML = alertBox;
+            appendCampaignTools(loadingDiv, "message", text, false);
             speakText(encodedReply);
 
         } catch (error) {
@@ -2273,8 +3149,7 @@ function triggerSOS() {
         return;
     }
 
-    let phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
-    let phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+    let [phone1 = "", phone2 = ""] = emergencyContacts;
 
     const formatPhone = (phone) => {
         let clean = phone.replace(/\D/g, "");
@@ -2326,8 +3201,7 @@ function sendAlertToZalo(level, message, advice) {
         return;
     }
 
-    const phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
-    const phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+    const [phone1 = "", phone2 = ""] = emergencyContacts;
 
     if (!phone1 && !phone2) {
         alert("Cụ vui lòng vào Hồ sơ để đăng ký số điện thoại người thân.");
@@ -2404,8 +3278,7 @@ async function sendAlertBySms(level, encodedAdvice) {
         return;
     }
 
-    const phone1 = localStorage.getItem("sos_phone1_" + accountPhone) || "";
-    const phone2 = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+    const [phone1 = "", phone2 = ""] = emergencyContacts;
 
     const relatives = [phone1, phone2]
         .map(phone => phone.trim())
@@ -2565,6 +3438,81 @@ async function sendAlertBySms(level, encodedAdvice) {
         });
     }
 
+    async function decodeQrFromDataUrl(dataUrl) {
+        if (typeof window.jsQR !== "function") return { available: false, value: "" };
+        return new Promise(function (resolve) {
+            const image = new Image();
+            image.onload = function () {
+                try {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = image.naturalWidth;
+                    canvas.height = image.naturalHeight;
+                    const context = canvas.getContext("2d", { willReadFrequently: true });
+                    context.drawImage(image, 0, 0);
+                    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = window.jsQR(pixels.data, pixels.width, pixels.height, { inversionAttempts: "attemptBoth" });
+                    resolve({ available: true, value: code ? code.data : "" });
+                } catch (error) {
+                    console.warn("Không giải mã được QR trên thiết bị:", error);
+                    resolve({ available: true, value: "" });
+                }
+            };
+            image.onerror = function () { resolve({ available: true, value: "" }); };
+            image.src = dataUrl;
+        });
+    }
+
+    function isWebUrl(value) {
+        try {
+            const candidate = /^https?:\/\//i.test(value) ? value : "https://" + value;
+            const parsed = new URL(candidate);
+            return (parsed.protocol === "http:" || parsed.protocol === "https:") && parsed.hostname.includes(".");
+        } catch (_error) {
+            return false;
+        }
+    }
+
+    async function inspectQrUrl(value) {
+        if (!isWebUrl(value)) return { status: "not_url" };
+        try {
+            const response = await fetch("/api/lookup/url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: value })
+            });
+            const data = await response.json();
+            if (!response.ok) return { status: "unverified", message: data.error || "Chưa thể xác minh liên kết." };
+            return data;
+        } catch (_error) {
+            return { status: "unverified", message: "Không kết nối được dịch vụ tra cứu." };
+        }
+    }
+
+    function renderQrResult(target, qrValue, qrScan, qrCheck) {
+        if (!qrValue && qrScan.available) return;
+        const panel = document.createElement("div");
+        panel.className = "qr-result";
+        if (!qrScan.available) {
+            panel.textContent = "Chưa tải được công cụ đọc QR trên thiết bị này. Không mở mã nếu chưa xác minh.";
+            target.appendChild(panel);
+            return;
+        }
+        if (!qrValue) return;
+        const urlPayload = isWebUrl(qrValue);
+        if (qrCheck && qrCheck.status === "match") {
+            panel.classList.add("danger");
+            panel.textContent = "QR dẫn tới liên kết bị Google Safe Browsing ghi nhận nguy hiểm. Không mở hoặc nhập thông tin.";
+        } else if (urlPayload && qrCheck && qrCheck.status === "no_match") {
+            panel.textContent = "QR chứa liên kết. Chưa có cảnh báo trong Safe Browsing, nhưng điều này không chứng minh liên kết an toàn.";
+        } else if (urlPayload) {
+            panel.textContent = "QR chứa liên kết nhưng chưa xác minh được: " + ((qrCheck && qrCheck.message) || "hãy tự kiểm tra qua kênh chính thức.");
+        } else {
+            panel.textContent = "QR chứa nội dung không phải link web. Không tự mở hoặc làm theo hướng dẫn trong mã: " + qrValue.slice(0, 180);
+        }
+        target.appendChild(panel);
+        if (urlPayload) appendCampaignTools(target, "url", qrValue, true);
+    }
+
     /* HÀM XỬ LÝ TẢI VÀ GỬI ẢNH CHÍNH */
     async function handleImageUpload(event) {
         const file = event.target.files[0];
@@ -2579,6 +3527,8 @@ async function sendAlertBySms(level, encodedAdvice) {
             alert(error.message || "Không thể đọc ảnh này.");
             return;
         }
+        const qrScan = await decodeQrFromDataUrl(base64Image);
+        const qrValue = qrScan.value;
 
             // 2. Hiển thị tin nhắn ảnh của người dùng (Chuẩn cấu trúc guianh.html)
             const userRow = document.createElement('div');
@@ -2613,7 +3563,16 @@ async function sendAlertBySms(level, encodedAdvice) {
 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "Chưa thể phân tích ảnh lúc này.");
-                const savedDiaryEntry = await saveDiaryEntry(data.source_text || "Phân tích từ ảnh (không trích xuất được nội dung).", data);
+                const qrCheck = qrValue ? await inspectQrUrl(qrValue) : null;
+                if (qrCheck && qrCheck.status === "match") {
+                    data.alert_level = "red";
+                    data.reply = "QR dẫn tới địa chỉ đã được ghi nhận có nguy cơ. Không mở link hoặc nhập thông tin.\n\n" + (data.reply || "");
+                }
+                const imageSource = [
+                    data.source_text || "Phân tích từ ảnh (không trích xuất được nội dung).",
+                    qrValue ? "Nội dung giải mã từ QR: " + qrValue : ""
+                ].filter(Boolean).join("\n\n");
+                const savedDiaryEntry = await saveDiaryEntry(imageSource, data);
                 const brakeAction = savedDiaryEntry
                     ? `<button class="speak-btn" style="background:#B91C1C;" onclick="openEmergencyBrake('${savedDiaryEntry.id}')"><i class="fa-solid fa-hand"></i> DỪNG LẠI, XỬ LÝ TỪNG BƯỚC</button>`
                     : "";
@@ -2683,6 +3642,8 @@ async function sendAlertBySms(level, encodedAdvice) {
                 }
 
                 loadingDiv.innerHTML = alertBox;
+                appendCampaignTools(loadingDiv, "message", data.source_text || "", false);
+                renderQrResult(loadingDiv, qrValue, qrScan, qrCheck);
                 speakText(encodedReply);
 
             
@@ -2693,7 +3654,7 @@ async function sendAlertBySms(level, encodedAdvice) {
             chatBody.scrollTop = chatBody.scrollHeight;
     }
     /* 8. HỒ SƠ CỦA CỤ */
-    function openProfile() {
+    async function openProfile() {
         const accountPhone = currentUserPhone;
 
         if (!accountPhone) {
@@ -2702,8 +3663,14 @@ async function sendAlertBySms(level, encodedAdvice) {
         }
 
         document.getElementById("profile-account-phone").innerText = accountPhone;
-        document.getElementById("profile-phone1").value = localStorage.getItem("sos_phone1_" + accountPhone) || "";
-        document.getElementById("profile-phone2").value = localStorage.getItem("sos_phone2_" + accountPhone) || "";
+        try {
+            await refreshEmergencyContacts();
+            await refreshFamilyPanel();
+        } catch (error) {
+            document.getElementById("family-status").textContent = error.message || "Chưa tải được thông tin đồng bộ.";
+        }
+        document.getElementById("profile-phone1").value = emergencyContacts[0] || "";
+        document.getElementById("profile-phone2").value = emergencyContacts[1] || "";
 
         document.getElementById("profile-modal").style.display = "flex";
     }
@@ -2712,18 +3679,27 @@ async function sendAlertBySms(level, encodedAdvice) {
         document.getElementById("profile-modal").style.display = "none";
     }
 
-    function saveProfile() {
+    async function saveProfile() {
         const accountPhone = currentUserPhone;
         if (!accountPhone) return;
 
         const p1 = document.getElementById("profile-phone1").value.trim();
         const p2 = document.getElementById("profile-phone2").value.trim();
 
-        localStorage.setItem("sos_phone1_" + accountPhone, p1);
-        localStorage.setItem("sos_phone2_" + accountPhone, p2);
-
-        alert("✅ Đã lưu số điện thoại người thân!");
-        closeProfile();
+        try {
+            const response = await fetch("/api/profile/contacts", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contacts: [p1, p2] })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa lưu được số người thân.");
+            emergencyContacts = data.contacts;
+            alert("Đã lưu và đồng bộ số điện thoại người thân.");
+            closeProfile();
+        } catch (error) {
+            document.getElementById("family-status").textContent = error.message || "Không kết nối được máy chủ.";
+        }
     }
 </script>
 

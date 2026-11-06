@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: safeai-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_PATH
+        value: "/tmp/safeai.db"
+      - key: OTP_DEMO_MODE
+        value: "true"
