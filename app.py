@@ -20,7 +20,7 @@ from urllib.request import Request, urlopen
 from dotenv import load_dotenv
 import requests
 from cryptography.fernet import Fernet, InvalidToken
-from flask import Flask, jsonify, request, render_template, session
+from flask import Flask, Response, jsonify, request, render_template, session
 from groq import Groq
 from google import genai
 from google.genai import types
@@ -47,6 +47,24 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(days=14),
     MAX_CONTENT_LENGTH=12 * 1024 * 1024,
 )
+
+
+@app.before_request
+def protect_preview_access():
+    expected_credentials = os.getenv("PREVIEW_BASIC_AUTH", "").strip()
+    if not expected_credentials:
+        return None
+    authorization = request.authorization
+    supplied_credentials = ""
+    if authorization:
+        supplied_credentials = f"{authorization.username}:{authorization.password or ''}"
+    if not hmac.compare_digest(supplied_credentials, expected_credentials):
+        return Response(
+            "Preview requires the shared demo credentials.",
+            status=401,
+            headers={"WWW-Authenticate": 'Basic realm="SafeAI demo preview", charset="UTF-8"'},
+        )
+    return None
 
 
 def contact_cipher():

@@ -41,6 +41,8 @@ Mục **Luyện tập** có các tình huống mô phỏng; điểm tốt nhất
 
 Khi phân tích có cảnh báo đỏ/cam, người dùng có thể mở **Phanh khẩn cấp** để chọn điều đã xảy ra, làm checklist theo tình huống và lưu tiến độ vào nhật ký. Nút gọi người thân chỉ mở ứng dụng gọi sau khi người dùng xác nhận. SafeAI không tự khóa giao dịch, không gọi ngân hàng/cơ quan chức năng và không thay thế hướng dẫn chính thức của họ.
 
+Để chia sẻ bản demo tạm thời, có thể bật `PREVIEW_BASIC_AUTH` theo dạng `demo:<mật-khẩu-ngẫu-nhiên-dài>` trước khi khởi chạy. Trình duyệt sẽ yêu cầu tài khoản/mật khẩu trước khi tải trang và gọi API. Chỉ chia sẻ với người tin cậy, dùng dữ liệu giả và tắt biến này sau buổi demo; đây không thay thế xác thực OTP hoặc triển khai production.
+
 Tài khoản mới cần xác minh mã OTP trước khi tạo. Nếu quên mật khẩu, chọn **Quên mật khẩu?**, nhập số điện thoại và mật khẩu mới, sau đó xác minh OTP SMS; mật khẩu chỉ được cập nhật sau khi mã hợp lệ. Phản hồi yêu cầu reset không tiết lộ số điện thoại có tài khoản hay không. Mật khẩu được băm ở máy chủ; không lưu mật khẩu đăng nhập trong trình duyệt. Nhật ký cũ của trình duyệt chỉ được nhập sau khi số điện thoại tương ứng xác minh thành công.
 
 ### Triển khai
