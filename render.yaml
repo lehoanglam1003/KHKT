@@ -17,3 +17,5 @@ services:
         value: "/tmp/safeai.db"
       - key: OTP_DEMO_MODE
         value: "true"
+      - key: PREVIEW_BASIC_AUTH_PASSWORD
+        generateValue: true

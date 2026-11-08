@@ -243,7 +243,7 @@
             max-width: 88%;
             padding: 12px 16px;
             border-radius: 16px;
-            font-size: 16px;
+            font-size: 18px;
             line-height: 1.5;
             box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
@@ -267,7 +267,7 @@
             border-radius: 12px;
             padding: 12px 14px;
             margin-top: 8px;
-            font-size: 15px;
+            font-size: 17px;
             font-weight: 600;
             display: flex;
             flex-direction: column;
@@ -296,9 +296,10 @@
             background: #0068FF;
             color: white;
             border: none;
-            padding: 6px 12px;
+            min-height: 44px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             display: inline-flex;
@@ -337,22 +338,22 @@
         .lookup-row input,
         .lookup-row select {
             min-width: 0;
-            height: 42px;
+            height: 50px;
             padding: 0 10px;
             border: 1px solid #94A3B8;
             border-radius: 6px;
             background: white;
-            font-size: 15px;
+            font-size: 17px;
         }
 
         .lookup-button {
-            min-height: 42px;
-            padding: 0 12px;
+            min-height: 50px;
+            padding: 0 14px;
             border: 0;
             border-radius: 6px;
             background: #0F766E;
             color: white;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
         }
@@ -360,7 +361,7 @@
         .lookup-note {
             margin-top: 7px;
             color: #475569;
-            font-size: 12px;
+            font-size: 15px;
             line-height: 1.4;
         }
 
@@ -371,7 +372,7 @@
             padding-top: 8px;
             border-top: 1px solid #E2E8F0;
             color: #334155;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.45;
             overflow-wrap: anywhere;
         }
@@ -394,11 +395,11 @@
 
         textarea {
             width: 100%;
-            height: 75px;
-            padding: 10px 85px 10px 12px;
+            height: 90px;
+            padding: 10px 112px 10px 12px;
             border: 2px solid #CBD5E1;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 18px;
             resize: none;
             outline: none;
         }
@@ -414,15 +415,15 @@
             background: #E2E8F0;
             color: #475569;
             border: none;
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 16px;
+            font-size: 18px;
         }
 
         .mic-btn.recording {
@@ -435,6 +436,7 @@
             background: var(--zalo-blue);
             color: white;
             border: none;
+            min-height: 60px;
             padding: 14px;
             border-radius: 12px;
             font-size: 18px;
@@ -936,6 +938,10 @@
         .training-choice { min-height: 48px; padding: 10px; border: 1px solid #94A3B8; border-radius: 6px; background: #F8FAFC; color: #1E293B; text-align: left; font: inherit; }
         .training-choice:disabled { opacity: 0.7; }
         .training-feedback { min-height: 56px; margin-top: 10px; line-height: 1.5; }
+        .training-complete { padding: 14px; border-left: 4px solid #0F766E; background: #ECFDF5; color: #134E4A; font-size: 18px; line-height: 1.5; }
+        .advanced-tools-list { display: grid; gap: 10px; }
+        .advanced-tool-button { min-height: 58px; padding: 12px; text-align: left; font-size: 18px; }
+        .advanced-tools-note { margin: 0 0 12px; color: #475569; font-size: 16px; line-height: 1.45; }
         .shared-entry { padding: 11px 0; border-top: 1px solid #CBD5E1; }
         .shared-entry h3 { font-size: 16px; }
         .shared-entry p { margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -1341,6 +1347,38 @@
     </section>
 </div>
 
+<div id="advanced-tools-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-tools-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="advanced-tools-title">Công cụ</h2>
+            <button class="feature-close" type="button" onclick="closeAdvancedTools()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Chọn một chức năng. Màn hình kiểm tra chính chỉ giữ các thao tác cần dùng hằng ngày.</p>
+        <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openLookup()"><i class="fa-solid fa-link"></i> Tra cứu link / số điện thoại</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openTraining()"><i class="fa-solid fa-graduation-cap"></i> Luyện tập nhận biết lừa đảo</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openDiary()"><i class="fa-solid fa-book-open"></i> Nhật ký xử lý</button>
+        </div>
+    </section>
+</div>
+
+<div id="lookup-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="lookup-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="lookup-title">Tra cứu link / số điện thoại</h2>
+            <button class="feature-close" type="button" onclick="closeLookup()" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="lookup-panel">
+            <div class="lookup-row">
+                <input type="text" id="lookup-input" maxlength="2048" placeholder="Dán link hoặc số điện thoại cần tra cứu" aria-label="Link hoặc số điện thoại cần tra cứu">
+                <button class="lookup-button" onclick="lookupIndicator()"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</button>
+            </div>
+            <p class="lookup-note">Tra link gửi URL tới Google Safe Browsing. QR được giải mã trên thiết bị; không tự mở link. Chỉ báo cáo cộng đồng sau khi xác nhận.</p>
+            <div id="lookup-result" class="lookup-result" aria-live="polite"></div>
+        </div>
+    </section>
+</div>
+
 <!-- GIAO DIỆN SAFEAI -->
 <div class="mobile-frame">
     <!-- Header -->
@@ -1366,10 +1404,7 @@
 
     <div class="diary-toolbar">
         <span id="diary-count">Chưa có lượt kiểm tra nào được lưu</span>
-        <div class="family-row-actions">
-            <button class="diary-open-btn" onclick="openTraining()"><i class="fa-solid fa-graduation-cap"></i> Luyện tập</button>
-            <button class="diary-open-btn" onclick="openDiary()"><i class="fa-solid fa-book-open"></i> Nhật ký</button>
-        </div>
+        <button class="diary-open-btn" type="button" onclick="openAdvancedTools()"><i class="fa-solid fa-toolbox"></i> Công cụ</button>
     </div>
 
     <!-- Chat Body -->
@@ -1384,26 +1419,17 @@
 
     <!-- Input Area -->
     <div class="input-area">
-        <div class="lookup-panel">
-            <div class="lookup-row">
-                <input type="text" id="lookup-input" maxlength="2048" placeholder="Dán link hoặc số điện thoại cần tra cứu" aria-label="Link hoặc số điện thoại cần tra cứu">
-                <button class="lookup-button" onclick="lookupIndicator()"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</button>
-            </div>
-            <p class="lookup-note">Tra link gửi URL tới Google Safe Browsing. QR được giải mã trên thiết bị; không tự mở link. Chỉ báo cáo cộng đồng sau khi xác nhận.</p>
-            <div id="lookup-result" class="lookup-result" aria-live="polite"></div>
-        </div>
-
         <div class="input-wrapper">
             <textarea id="userInput" placeholder="Nhập hoặc nhấn mic để nói..."></textarea>
             
             <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event)">
             
-            <button class="mic-btn" id="imgBtn" style="right: 52px;" onclick="document.getElementById('imageInput').click()" title="Chụp hoặc tải ảnh">
+            <button class="mic-btn" id="imgBtn" style="right: 64px;" onclick="document.getElementById('imageInput').click()" title="Chụp hoặc tải ảnh" aria-label="Chụp hoặc tải ảnh">
                 <i class="fa-solid fa-image"></i>
             </button>
 
             <!-- Nút Mic: Chuyên trách Bật / Tắt Mic -->
-            <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Bấm để bật/tắt mic">
+            <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Bấm để bật hoặc dừng thu âm" aria-label="Bật hoặc dừng thu âm">
                 <i class="fa-solid fa-microphone"></i>
             </button>
         </div>
@@ -1427,6 +1453,7 @@
     let emergencyGuideIndex = 0;
     let trainingProgressCache = {};
     let trainingScenarioIndex = 0;
+    let trainingReplayMode = false;
 
     async function loginUser() {
         await requestAuthOtp("login");
@@ -1877,6 +1904,24 @@
         result.appendChild(message);
     }
 
+    function openAdvancedTools() {
+        document.getElementById("advanced-tools-modal").style.display = "flex";
+    }
+
+    function closeAdvancedTools() {
+        document.getElementById("advanced-tools-modal").style.display = "none";
+    }
+
+    function openLookup() {
+        closeAdvancedTools();
+        document.getElementById("lookup-modal").style.display = "flex";
+        document.getElementById("lookup-input").focus();
+    }
+
+    function closeLookup() {
+        document.getElementById("lookup-modal").style.display = "none";
+    }
+
     async function lookupIndicator() {
         const input = document.getElementById("lookup-input");
         const value = input.value.trim();
@@ -1915,8 +1960,14 @@
                 body: JSON.stringify({ url: value })
             });
             const data = await response.json();
-            if (!response.ok) showLookupMessage(data.error || "Chưa thể xác minh liên kết.", "lookup-muted");
-            else renderUrlLookup(data);
+            if (!response.ok) {
+                const message = (data.error || "").includes("GOOGLE_SAFE_BROWSING_API_KEY")
+                    ? "Chưa bật được tra cứu link vì máy chủ thiếu khóa Google Safe Browsing. Link này chưa được xác minh; Cụ hãy tự mở ứng dụng/trang chính thức để kiểm tra."
+                    : data.error || "Chưa thể xác minh liên kết.";
+                showLookupMessage(message, "lookup-muted");
+            } else {
+                renderUrlLookup(data);
+            }
         } catch (error) {
             showLookupMessage(error.message || "Không kết nối được máy chủ tra cứu.", "lookup-muted");
         }
@@ -2407,6 +2458,8 @@
     ];
 
     async function openTraining() {
+        closeAdvancedTools();
+        trainingReplayMode = false;
         document.getElementById("training-modal").style.display = "flex";
         document.getElementById("training-content").textContent = "Đang tải tiến độ...";
         try {
@@ -2421,11 +2474,36 @@
     }
 
     function renderTrainingScenario() {
-        const scenario = trainingScenarios[trainingScenarioIndex];
         const completeCount = trainingScenarios.filter(function (item) { return trainingProgressCache[item.id]; }).length;
-        document.getElementById("training-progress").textContent = "Đã hoàn thành " + completeCount + "/" + trainingScenarios.length + " tình huống";
+        document.getElementById("training-progress").textContent = "Đã làm " + completeCount + "/" + trainingScenarios.length + " tình huống";
         const content = document.getElementById("training-content");
         content.replaceChildren();
+        if (completeCount === trainingScenarios.length && !trainingReplayMode) {
+            const notice = document.createElement("p");
+            notice.className = "training-complete";
+            notice.setAttribute("role", "status");
+            notice.textContent = "Cụ đã làm đủ cả " + trainingScenarios.length + " tình huống. Kết quả đã được lưu vào tài khoản.";
+            const doneButton = document.createElement("button");
+            doneButton.className = "lookup-button";
+            doneButton.style.width = "100%";
+            doneButton.style.marginTop = "10px";
+            doneButton.textContent = "XONG - QUAY VỀ MÀN HÌNH CHÍNH";
+            doneButton.addEventListener("click", closeTraining);
+            const replayButton = document.createElement("button");
+            replayButton.className = "training-choice advanced-tool-button";
+            replayButton.style.width = "100%";
+            replayButton.style.marginTop = "8px";
+            replayButton.textContent = "LUYỆN LẠI TỪ ĐẦU";
+            replayButton.addEventListener("click", function () {
+                trainingReplayMode = true;
+                trainingScenarioIndex = 0;
+                renderTrainingScenario();
+            });
+            content.append(notice, doneButton, replayButton);
+            return;
+        }
+
+        const scenario = trainingScenarios[trainingScenarioIndex];
         const heading = document.createElement("h3");
         heading.textContent = scenario.title;
         const promptText = document.createElement("p");
@@ -2457,7 +2535,11 @@
                         attempts: previous.attempts + 1,
                         best_score: Math.max(previous.best_score, score)
                     };
-                    document.getElementById("training-progress").textContent = "Đã hoàn thành " + trainingScenarios.filter(function (item) { return trainingProgressCache[item.id]; }).length + "/" + trainingScenarios.length + " tình huống";
+                    const completedCount = trainingScenarios.filter(function (item) { return trainingProgressCache[item.id]; }).length;
+                    document.getElementById("training-progress").textContent = "Đã làm " + completedCount + "/" + trainingScenarios.length + " tình huống";
+                    if (completedCount === trainingScenarios.length && !trainingReplayMode) {
+                        feedback.textContent += " Cụ đã làm đủ tất cả tình huống; kết quả đã lưu.";
+                    }
                 } catch (error) {
                     feedback.textContent += " Kết quả chưa đồng bộ với tài khoản.";
                 }
@@ -2465,8 +2547,25 @@
                 next.className = "lookup-button";
                 next.style.width = "100%";
                 next.style.marginTop = "9px";
-                next.textContent = trainingScenarioIndex < trainingScenarios.length - 1 ? "TÌNH HUỐNG TIẾP THEO" : "LUYỆN LẠI TỪ ĐẦU";
+                const isComplete = !trainingReplayMode && trainingScenarios.every(function (item) { return trainingProgressCache[item.id]; });
+                next.textContent = isComplete
+                    ? "XONG - QUAY VỀ MÀN HÌNH CHÍNH"
+                    : trainingScenarioIndex < trainingScenarios.length - 1
+                        ? "TÌNH HUỐNG TIẾP THEO"
+                        : trainingReplayMode ? "KẾT THÚC LƯỢT LUYỆN" : "LUYỆN LẠI TỪ ĐẦU";
                 next.addEventListener("click", function () {
+                    if (isComplete) {
+                        closeTraining();
+                        return;
+                    }
+                    if (trainingScenarioIndex === trainingScenarios.length - 1) {
+                        if (trainingReplayMode) {
+                            trainingReplayMode = false;
+                        } else {
+                            trainingReplayMode = true;
+                            trainingScenarioIndex = -1;
+                        }
+                    }
                     trainingScenarioIndex = (trainingScenarioIndex + 1) % trainingScenarios.length;
                     renderTrainingScenario();
                 });
@@ -2550,6 +2649,7 @@
     }
 
     async function openDiary() {
+        closeAdvancedTools();
         if (!currentUserPhone) {
             alert("Cụ vui lòng đăng nhập để xem nhật ký.");
             return;
@@ -2852,16 +2952,12 @@ function speakText(inputData) {
     async function sendMessage() {
         const input = document.getElementById('userInput');
         const chatBody = document.getElementById('chatBody');
+        if (isVoiceCaptureRequested) await stopVoiceCapture();
         const text = input.value.trim();
 
         if (!text) {
             alert("⚠️ Cụ vui lòng nhập hoặc nhấn mic để nói nội dung cần kiểm tra nhé!");
             return;
-        }
-
-        // Tự động tắt mic nếu đang bật thu âm khi người dùng bấm gửi
-        if (isRecording) {
-            toggleVoiceInput();
         }
 
         const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAA=');
@@ -2975,17 +3071,17 @@ function speakText(inputData) {
     }
 
 
-/* 5. NHẬN DẠNG GIỌNG NÓI
-   Nói xong tự tắt mic.
-   Bấm mic lần nữa để nói tiếp, nối nội dung cũ.
-   Không làm lặp chữ trên điện thoại Samsung.
-*/
+/* Thu âm tiếp tục qua khoảng lặng; bấm Gửi để kết thúc và gửi transcript. */
 
 let recognition = null;
 let isRecording = false;
+let isVoiceCaptureRequested = false;
 let baseTranscript = "";
 let finalTranscript = "";
 let interimTranscript = "";
+let voiceRestartTimer = null;
+let voiceStopTimeout = null;
+let voiceStopResolve = null;
 
 const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2995,12 +3091,15 @@ if (SpeechRecognition) {
 
     recognition.lang = "vi-VN";
 
-    // Mỗi lần bấm mic chỉ thực hiện một lượt nói.
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = function () {
+        if (!isVoiceCaptureRequested) {
+            recognition.stop();
+            return;
+        }
         isRecording = true;
 
         const micBtn = document.getElementById("micBtn");
@@ -3012,7 +3111,7 @@ if (SpeechRecognition) {
 
         if (userInput) {
             userInput.placeholder =
-                "🎙️ Cụ cứ nói, nói xong mic tự tắt...";
+                "🎙️ Đang nghe. Cụ cứ ngừng nghỉ; bấm Gửi khi nói xong.";
         }
     };
 
@@ -3057,6 +3156,8 @@ if (SpeechRecognition) {
     recognition.onerror = function (event) {
         console.warn("Lỗi nhận diện giọng nói:", event.error);
 
+        if (event.error === "no-speech" || event.error === "aborted") return;
+
         if (event.error === "not-allowed" ||
             event.error === "service-not-allowed") {
             alert("Cụ vui lòng cho phép Chrome sử dụng micro.");
@@ -3066,6 +3167,11 @@ if (SpeechRecognition) {
             alert("Không kết nối được dịch vụ nhận diện. Cụ kiểm tra mạng nhé.");
         }
 
+        isVoiceCaptureRequested = false;
+        if (voiceRestartTimer) {
+            clearTimeout(voiceRestartTimer);
+            voiceRestartTimer = null;
+        }
         stopRecordingState();
     };
 
@@ -3083,9 +3189,79 @@ if (SpeechRecognition) {
                 : newSpeech;
         }
 
-        // Tự tắt mic, giữ nguyên nội dung trong ô nhập.
+        if (voiceStopResolve) {
+            const resolveStop = voiceStopResolve;
+            voiceStopResolve = null;
+            if (voiceStopTimeout) {
+                clearTimeout(voiceStopTimeout);
+                voiceStopTimeout = null;
+            }
+            resolveStop();
+        }
+
+        if (isVoiceCaptureRequested) {
+            isRecording = false;
+            const micBtn = document.getElementById("micBtn");
+            const input = document.getElementById("userInput");
+            if (micBtn) micBtn.classList.add("recording");
+            if (input) input.placeholder = "🎙️ Đang nối micro... Cụ tiếp tục nói hoặc bấm Gửi.";
+            voiceRestartTimer = setTimeout(startVoiceRecognitionSegment, 400);
+            return;
+        }
+
         stopRecordingState();
     };
+}
+
+function startVoiceRecognitionSegment() {
+    voiceRestartTimer = null;
+    if (!recognition || !isVoiceCaptureRequested) return;
+    const userInput = document.getElementById("userInput");
+    baseTranscript = userInput ? userInput.value.trim() : "";
+    finalTranscript = "";
+    interimTranscript = "";
+    try {
+        recognition.start();
+    } catch (error) {
+        console.warn("Không thể nối lại micro:", error);
+        isVoiceCaptureRequested = false;
+        stopRecordingState();
+        alert("Micro đã dừng. Cụ hãy bấm micro để nói tiếp.");
+    }
+}
+
+function stopVoiceCapture() {
+    isVoiceCaptureRequested = false;
+    if (voiceRestartTimer) {
+        clearTimeout(voiceRestartTimer);
+        voiceRestartTimer = null;
+    }
+    if (!recognition || !isRecording) {
+        stopRecordingState();
+        return Promise.resolve();
+    }
+    return new Promise(function (resolve) {
+        voiceStopResolve = resolve;
+        voiceStopTimeout = setTimeout(function () {
+            if (!voiceStopResolve) return;
+            const resolveStop = voiceStopResolve;
+            voiceStopResolve = null;
+            voiceStopTimeout = null;
+            stopRecordingState();
+            resolveStop();
+        }, 1200);
+        try {
+            recognition.stop();
+        } catch (error) {
+            console.warn("Không dừng được micro:", error);
+            const resolveStop = voiceStopResolve;
+            voiceStopResolve = null;
+            clearTimeout(voiceStopTimeout);
+            voiceStopTimeout = null;
+            stopRecordingState();
+            resolveStop();
+        }
+    });
 }
 
 function toggleVoiceInput() {
@@ -3097,35 +3273,18 @@ function toggleVoiceInput() {
         return;
     }
 
-    const userInput = document.getElementById("userInput");
-
-    if (isRecording) {
-        try {
-            recognition.stop();
-        } catch (error) {
-            console.warn("Không dừng được mic:", error);
-        }
-
-        stopRecordingState();
+    if (isVoiceCaptureRequested) {
+        stopVoiceCapture();
         return;
     }
 
-    // Lưu nội dung đang có để lượt nói mới nối tiếp nội dung cũ.
-    baseTranscript = userInput ? userInput.value.trim() : "";
-    finalTranscript = "";
-    interimTranscript = "";
-
-    try {
-        recognition.start();
-    } catch (error) {
-        console.warn("Không bật được mic:", error);
-        stopRecordingState();
-        alert("Chưa bật được micro. Cụ chờ một chút rồi thử lại nhé.");
-    }
+    isVoiceCaptureRequested = true;
+    startVoiceRecognitionSegment();
 }
 
 function stopRecordingState() {
     isRecording = false;
+    isVoiceCaptureRequested = false;
 
     const userInput = document.getElementById("userInput");
     const micBtn = document.getElementById("micBtn");

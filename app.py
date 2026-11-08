@@ -51,6 +51,21 @@ app.config.update(
 
 @app.before_request
 def protect_preview_access():
+    preview_password = os.getenv("PREVIEW_BASIC_AUTH_PASSWORD", "").strip()
+    if preview_password:
+        authorization = request.authorization
+        supplied_username = authorization.username if authorization else ""
+        supplied_password = authorization.password or "" if authorization else ""
+        valid_username = hmac.compare_digest(supplied_username, "safeai-preview")
+        valid_password = hmac.compare_digest(supplied_password, preview_password)
+        if valid_username and valid_password:
+            return None
+        return Response(
+            "Preview requires the shared demo credentials.",
+            status=401,
+            headers={"WWW-Authenticate": 'Basic realm="SafeAI demo preview", charset="UTF-8"'},
+        )
+
     expected_credentials = os.getenv("PREVIEW_BASIC_AUTH", "").strip()
     if not expected_credentials:
         return None
@@ -270,6 +285,45 @@ def demo_otp_enabled():
 
 def generate_demo_otp():
     return str(secrets.randbelow(900000) + 100000)
+
+
+OFFICIAL_CARRIER_DOMAINS = ("vnpt.com.vn", "vinaphone.com.vn")
+
+
+def is_official_carrier_promotion(message):
+    normalized = unicodedata.normalize("NFD", str(message or "").lower())
+    normalized = "".join(char for char in normalized if unicodedata.category(char) != "Mn").replace("đ", "d")
+    urls = re.findall(r"https?://[^\s<>\"']+", str(message or ""), re.IGNORECASE)
+    if not urls or not any(term in normalized for term in ("vinaphone", "vnpt")):
+        return False
+    if not any(term in normalized for term in ("khuyen mai", "khuyen mai", "chuong trinh", "tham gia")):
+        return False
+
+    for candidate in urls:
+        try:
+            host = urlsplit(candidate.rstrip(".,;:!?)]}")).hostname
+        except ValueError:
+            return False
+        if not host or not any(host.lower() == domain or host.lower().endswith("." + domain) for domain in OFFICIAL_CARRIER_DOMAINS):
+            return False
+
+    high_risk_requests = (
+        "otp", "mat khau", "ma xac thuc", "ma pin", "chuyen khoan",
+        "tai khoan ca nhan", "dong phi", "phi nhan qua", "phi rut tien",
+        "giai ngan", "nap tien de rut", "nap tien truoc de nhan",
+        "nap tien de mo khoa", "bao dam loi nhuan",
+    )
+    return not any(term in normalized for term in high_risk_requests)
+
+
+def official_carrier_promotion_reply():
+    return (
+        "Đây có vẻ là chương trình khuyến mãi của nhà mạng: đường dẫn nằm dưới tên miền VNPT/VinaPhone, "
+        "và nội dung không yêu cầu OTP, mật khẩu hay chuyển khoản vào tài khoản cá nhân. "
+        "Nạp cước để tham gia khuyến mãi không tự nó chứng minh có lừa đảo.\n\n"
+        "Để chắc chắn, Cụ hãy tự mở ứng dụng My VNPT hoặc tự tìm trang chính thức của nhà mạng. "
+        "Không cung cấp OTP/mật khẩu và không trả thêm phí để nhận quà."
+    )
 
 
 def send_twilio_otp(phone):
@@ -1241,9 +1295,9 @@ Chọn RED khi có dấu hiệu lừa đảo rõ ràng hoặc nguy cơ mất ti�
 ĐẶC BIỆT phải chọn RED nếu có một trong các tình huống sau:
 
 - Yêu cầu cung cấp OTP, mật khẩu, mã PIN hoặc mã xác thực.
-- Yêu cầu chuyển tiền hoặc nạp tiền để nhận tiền thưởng, lợi nhuận, quà tặng, hoa hồng hoặc khoản tiền lớn bất thường.
+- Yêu cầu chuyển tiền vào tài khoản cá nhân/không rõ nguồn gốc, đóng phí để mở khóa/nhận/rút giải thưởng, hoặc nạp tiền vào nền tảng đầu tư để nhận lợi nhuận.
 - Hứa hẹn nhận số tiền rất lớn nhưng chỉ cần nạp hoặc chuyển một khoản tiền nhỏ.
-- Có mô hình "nạp tiền trước - nhận tiền lớn sau".
+- Có mô hình "nạp tiền trước - nhận tiền lớn sau" vào ví/tài khoản không rõ nguồn gốc, không phải mua cước/dịch vụ thông thường.
 - Dụ tham gia kiếm tiền nhanh, đầu tư nhanh hoặc lợi nhuận cực cao nhưng phải nạp tiền trước.
 - Yêu cầu chuyển tiền vào tài khoản cá nhân hoặc tài khoản không rõ nguồn gốc.
 - Mạo danh ngân hàng, công an, cơ quan nhà nước, nhà mạng, người thân hoặc tổ chức uy tín.
@@ -1253,6 +1307,12 @@ Chọn RED khi có dấu hiệu lừa đảo rõ ràng hoặc nguy cơ mất ti�
 - Có NHIỀU dấu hiệu đáng ngờ xuất hiện cùng lúc.
 
 QUY TẮC QUAN TRỌNG:
+
+KHÔNG đánh đồng hai trường hợp sau:
+- Nạp cước điện thoại/dịch vụ theo giá thông thường để được dùng dịch vụ hoặc đủ điều kiện tham gia chương trình khuyến mãi/quay thưởng.
+- Chuyển tiền/đóng phí/nạp vào ví lạ với lời hứa chắc chắn nhận tiền, rút thưởng hoặc mở khóa lợi nhuận.
+
+Trường hợp thứ nhất KHÔNG tự nó là dấu hiệu RED. Nếu tin khuyến mãi có link trên tên miền chính thức của nhà mạng và không xin OTP/mật khẩu, không yêu cầu chuyển khoản cá nhân hay đóng phí nhận/rút thưởng, hãy đánh giá GREEN hoặc ORANGE nhẹ để khuyến nghị tự kiểm tra trên ứng dụng chính thức. Không bịa thêm rằng link lạ hoặc thúc giục nếu nội dung không có dấu hiệu đó.
 
 Nếu một tin nhắn vừa:
 (1) yêu cầu nạp/chuyển tiền,
@@ -1545,6 +1605,13 @@ def check_scam():
             }), 413
 
         if not client:
+            if is_official_carrier_promotion(user_message):
+                return jsonify({
+                    'reply': official_carrier_promotion_reply() + '\n\nAI chưa được cấu hình; đây là nhận diện quy tắc hạn chế báo nhầm, không thay thế xác minh của nhà mạng.',
+                    'alert_level': 'green',
+                    'alert_color': '#2e7d32'
+                })
+
             normalized_message = unicodedata.normalize('NFD', user_message.lower())
             normalized_message = ''.join(
                 char for char in normalized_message
@@ -1586,7 +1653,7 @@ def check_scam():
                 'alert_color': '#e53935' if alert_level == 'red' else '#f57c00'
             })
 
-        # Tên model chuẩn tuyệt đối không dính khoảng trắng
+                # Tên model chuẩn tuyệt đối không dính khoảng trắng
         selected_model = "openai/gpt-oss-120b"
 
         chat_completion = client.chat.completions.create(
@@ -1641,6 +1708,11 @@ def check_scam():
             flags=re.IGNORECASE
         ).strip()
 
+        if is_official_carrier_promotion(user_message):
+            alert_level = "green"
+            alert_color = "#2e7d32"
+            reply_text = official_carrier_promotion_reply()
+
         
         return jsonify({
             'reply': reply_text,
@@ -1657,22 +1729,31 @@ def check_scam():
         }), 502
 
 def extract_text_with_ocr_space(image_bytes, mime_type):
-    response = requests.post(
-        "https://api.ocr.space/parse/image",
-        headers={"apikey": OCR_SPACE_API_KEY},
-        data={"language": "vie", "OCREngine": "2", "detectOrientation": "true"},
-        files={"file": ("safeai-image", image_bytes, mime_type)},
-        timeout=(5, 20),
-    )
-    response.raise_for_status()
-    result = response.json()
-    if result.get("IsErroredOnProcessing"):
-        raise ValueError("OCR.Space could not process the image")
-    return "\n".join(
-        item.get("ParsedText", "").strip()
-        for item in result.get("ParsedResults", [])
-        if item.get("ParsedText", "").strip()
-    ).strip()
+    for engine in ("2", "1"):
+        response = requests.post(
+            "https://api.ocr.space/parse/image",
+            headers={"apikey": OCR_SPACE_API_KEY},
+            data={
+                "language": "vie",
+                "OCREngine": engine,
+                "detectOrientation": "true",
+                "scale": "true",
+            },
+            files={"file": ("safeai-image", image_bytes, mime_type)},
+            timeout=(5, 20),
+        )
+        response.raise_for_status()
+        result = response.json()
+        if result.get("IsErroredOnProcessing"):
+            continue
+        extracted_text = "\n".join(
+            item.get("ParsedText", "").strip()
+            for item in result.get("ParsedResults", [])
+            if item.get("ParsedText", "").strip()
+        ).strip()
+        if extracted_text:
+            return extracted_text
+    return ""
 
 
 def analyze_ocr_text(extracted_text):
@@ -1790,7 +1871,7 @@ Hãy phân tích trực tiếp toàn bộ hình ảnh, không chỉ đọc chữ
             reply_text += "\n\n(Lưu ý: phân tích dựa trên chữ OCR, chưa đánh giá được logo, bố cục hoặc mã QR trong ảnh.)"
         else:
             return jsonify({
-                "error": "OCR.Space chưa nhận diện được chữ trong ảnh; chưa thể đánh giá nội dung.",
+                "error": "Ảnh chưa đọc được chữ nên SafeAI chưa thể đánh giá. Cụ hãy chụp gần hơn, giữ ảnh thẳng và đủ sáng; hoặc dán nội dung tin nhắn vào ô kiểm tra. Chưa đọc được chữ không có nghĩa là nội dung an toàn.",
                 "alert_level": "orange",
                 "alert_color": "#f57c00",
             }), 422
@@ -1812,6 +1893,11 @@ Hãy phân tích trực tiếp toàn bộ hình ảnh, không chỉ đọc chữ
             r"^\s*LEVEL:\s*(RED|ORANGE|GREEN)\s*\n?", "", reply_text,
             count=1, flags=re.IGNORECASE,
         ).strip()
+
+        if is_official_carrier_promotion(extracted_text):
+            alert_level = "green"
+            alert_color = "#2e7d32"
+            reply_text = official_carrier_promotion_reply()
 
         return jsonify({
             "reply": reply_text or "Cháu chưa thể đưa ra nhận xét chắc chắn về ảnh này. Cụ hãy kiểm tra lại với người thân hoặc đơn vị chính thức.",

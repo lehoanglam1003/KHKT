@@ -25,6 +25,8 @@ Phân tích ảnh trực quan cần `GEMINI_API_KEY`; có thể đổi model b�
 
 Để bật tra cứu link, bật Google Safe Browsing Lookup API và điền `GOOGLE_SAFE_BROWSING_API_KEY`. Giới hạn key ở phía Google Cloud và chỉ dùng dịch vụ theo điều khoản hiện hành; Safe Browsing Lookup API dành cho mục đích phi thương mại. Khi tra cứu, toàn bộ URL (kể cả tham số truy vấn, nhưng bỏ phần fragment) được gửi tới Google; không tra các link riêng tư chứa mã truy cập. Kết quả không có cảnh báo không chứng minh link an toàn.
 
+Nếu chưa có `GOOGLE_SAFE_BROWSING_API_KEY`, app báo link chưa xác minh thay vì đánh dấu an toàn. Tra cứu cộng đồng số/link vẫn là tín hiệu tham khảo, không phải kết luận chính thức.
+
 Tra cứu số điện thoại dựa trên báo cáo cộng đồng của người dùng đã xác minh OTP. Mỗi tài khoản chỉ có một báo cáo cho mỗi số và có thể gỡ báo cáo; hệ thống chỉ hiển thị tổng hợp, không hiển thị danh tính người báo. Đây không phải cơ sở dữ liệu chính thức và có thể có báo cáo sai.
 
 ### Vòng tròn người thân và quyền riêng tư
@@ -37,11 +39,19 @@ Số liên hệ SOS được đồng bộ theo tài khoản và mã hóa bằng 
 
 ### Luyện tập và hướng dẫn
 
-Mục **Luyện tập** có các tình huống mô phỏng; điểm tốt nhất và số lần làm được lưu theo tài khoản. Trong **Phanh khẩn cấp**, trình duyệt có thể đọc từng bước nếu thiết bị có giọng tiếng Việt. Các tính năng này không tự gọi ngân hàng, người thân hoặc cơ quan chức năng.
+Màn hình chính ưu tiên ô kiểm tra; **Tra cứu**, **Luyện tập** và **Nhật ký** được mở riêng từ nút **Công cụ**. Chữ và nút thao tác chính được đặt lớn hơn cho người cao tuổi. Mục **Luyện tập** có thông báo hoàn thành và nút về màn hình chính/luyện lại; điểm tốt nhất và số lần làm được lưu theo tài khoản.
+
+Nhận dạng giọng nói tiếp tục qua các khoảng ngừng ngắn; bấm **Kiểm tra ngay** để chốt nội dung và gửi. OCR.Space thử hai engine khi engine đầu không nhận ra chữ; nếu vẫn thất bại, app hướng dẫn chụp sát, thẳng và đủ sáng, đồng thời không kết luận nội dung an toàn.
+
+Khuyến mãi nạp cước để tham gia quay thưởng không tự nó là dấu hiệu lừa đảo. Với thông báo VinaPhone/VNPT có link thuộc tên miền `vnpt.com.vn` hoặc `vinaphone.com.vn`, không yêu cầu OTP/mật khẩu hay chuyển khoản cá nhân, app tránh tự động gắn cảnh báo đỏ và khuyên người dùng tự xác minh trên ứng dụng chính thức. Quy tắc này không thay thế kiểm tra chiến dịch với nhà mạng.
+
+Trong **Phanh khẩn cấp**, trình duyệt có thể đọc từng bước nếu thiết bị có giọng tiếng Việt. Các tính năng này không tự gọi ngân hàng, người thân hoặc cơ quan chức năng.
 
 Khi phân tích có cảnh báo đỏ/cam, người dùng có thể mở **Phanh khẩn cấp** để chọn điều đã xảy ra, làm checklist theo tình huống và lưu tiến độ vào nhật ký. Nút gọi người thân chỉ mở ứng dụng gọi sau khi người dùng xác nhận. SafeAI không tự khóa giao dịch, không gọi ngân hàng/cơ quan chức năng và không thay thế hướng dẫn chính thức của họ.
 
 Để chia sẻ bản demo tạm thời, có thể bật `PREVIEW_BASIC_AUTH` theo dạng `demo:<mật-khẩu-ngẫu-nhiên-dài>` trước khi khởi chạy. Trình duyệt sẽ yêu cầu tài khoản/mật khẩu trước khi tải trang và gọi API. Chỉ chia sẻ với người tin cậy, dùng dữ liệu giả và tắt biến này sau buổi demo; đây không thay thế xác thực OTP hoặc triển khai production.
+
+Blueprint Render bật Basic Auth cho demo bằng `PREVIEW_BASIC_AUTH_PASSWORD` do Render tự sinh. Tài khoản truy cập là `safeai-preview`; lấy mật khẩu trong **Environment** của web service Render sau khi deploy. Không chia sẻ thông tin này công khai. Cấu hình demo vẫn dùng OTP demo và SQLite trong `/tmp`, vì vậy không dùng cho dữ liệu thật.
 
 Tài khoản mới cần xác minh mã OTP trước khi tạo. Nếu quên mật khẩu, chọn **Quên mật khẩu?**, nhập số điện thoại và mật khẩu mới, sau đó xác minh OTP SMS; mật khẩu chỉ được cập nhật sau khi mã hợp lệ. Phản hồi yêu cầu reset không tiết lộ số điện thoại có tài khoản hay không. Mật khẩu được băm ở máy chủ; không lưu mật khẩu đăng nhập trong trình duyệt. Nhật ký cũ của trình duyệt chỉ được nhập sau khi số điện thoại tương ứng xác minh thành công.
 
