@@ -203,11 +203,52 @@ def init_db():
                 completed_at INTEGER NOT NULL,
                 PRIMARY KEY (user_phone, scenario_id)
             );
+            CREATE TABLE IF NOT EXISTS trusted_contacts (
+                id TEXT PRIMARY KEY,
+                user_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                label TEXT NOT NULL,
+                identifier TEXT NOT NULL DEFAULT '',
+                kind TEXT NOT NULL CHECK (kind IN ('trusted', 'blocked')),
+                created_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS guardian_alerts (
+                id TEXT PRIMARY KEY,
+                owner_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                level TEXT NOT NULL,
+                summary TEXT NOT NULL DEFAULT '',
+                source_excerpt TEXT NOT NULL DEFAULT '',
+                created_at INTEGER NOT NULL,
+                acknowledged INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS scam_feedback (
+                id TEXT PRIMARY KEY,
+                user_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+                diary_entry_id TEXT NOT NULL DEFAULT '',
+                source_excerpt TEXT NOT NULL DEFAULT '',
+                ai_level TEXT NOT NULL,
+                verdict TEXT NOT NULL CHECK (verdict IN ('correct', 'wrong')),
+                note TEXT NOT NULL DEFAULT '',
+                created_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS safety_lock (
+                user_phone TEXT PRIMARY KEY REFERENCES users(phone) ON DELETE CASCADE,
+                locked_until INTEGER NOT NULL,
+                reason TEXT NOT NULL DEFAULT '',
+                updated_at INTEGER NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS user_settings (
+                user_phone TEXT PRIMARY KEY REFERENCES users(phone) ON DELETE CASCADE,
+                voice_region TEXT NOT NULL DEFAULT 'auto',
+                hands_free INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            );
             CREATE INDEX IF NOT EXISTS phone_reports_phone_idx ON phone_reports(phone);
             CREATE INDEX IF NOT EXISTS family_links_member_idx ON family_links(member_phone, status);
             CREATE INDEX IF NOT EXISTS campaign_reports_fingerprint_idx ON campaign_reports(kind, fingerprint);
             CREATE INDEX IF NOT EXISTS diary_entries_created_idx
                 ON diary_entries(user_phone, created_at DESC);
+            CREATE INDEX IF NOT EXISTS trusted_contacts_user_idx ON trusted_contacts(user_phone, kind);
+            CREATE INDEX IF NOT EXISTS guardian_alerts_owner_idx ON guardian_alerts(owner_phone, created_at DESC);
         """)
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(diary_entries)")}
         if "checklist" not in columns:
@@ -287,6 +328,99 @@ def generate_demo_otp():
     return str(secrets.randbelow(900000) + 100000)
 
 
+ALERT_COLORS = {"red": "#e53935", "orange": "#f57c00", "green": "#2e7d32"}
+
+
+def strip_diacritics(value):
+    normalized = unicodedata.normalize("NFD", str(value or "").lower())
+    return "".join(
+        char for char in normalized if unicodedata.category(char) != "Mn"
+    ).replace("đ", "d")
+
+
+# Từ khóa chỉ các đơn vị/cơ quan thường bị mạo danh trong tin nhắn lừa đảo.
+IMPERSONATION_TERMS = (
+    "cong an", "canh sat", "toa an", "vien kiem sat", "bo cong an",
+    "ngan hang", "vietcombank", "techcombank", "bidv", "agribank", "vietinbank",
+    "mbbank", "vpbank", "sacombank", "tpbank", "shb", "acb",
+    "bao hiem xa hoi", "bhxh", "thue", "dien luc", "evn", "buu dien",
+    "viettel", "vinaphone", "mobifone", "vietnamobile",
+    "benh vien", "cong chung", "dang kiem", "ho chieu", "xuat nhap canh",
+    "chuyen tien", "otp", "ma xac thuc", "mat khau", "tai khoan bi khoa",
+    "cccd", "can cuoc", "dinh danh",
+)
+
+
+def detect_impersonation(user_phone, message):
+    """Đối chiếu nội dung với danh bạ đáng tin và số đen của người dùng."""
+    normalized = strip_diacritics(message)
+    digits_only = re.sub(r"\D", "", str(message or ""))
+
+    matched_trusted = []
+    matched_blocked = []
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT label, identifier, kind FROM trusted_contacts WHERE user_phone = ? ORDER BY created_at",
+            (user_phone,),
+        ).fetchall()
+
+    for row in rows:
+        label = strip_diacritics(row["label"]).strip()
+        identifier = re.sub(r"\D", "", str(row["identifier"] or ""))
+        found = False
+        if len(label) >= 3 and label in normalized:
+            found = True
+        if len(identifier) >= 9 and identifier in digits_only:
+            found = True
+        if not found:
+            continue
+        item = {"label": row["label"], "identifier": row["identifier"]}
+        if row["kind"] == "blocked":
+            matched_blocked.append(item)
+        else:
+            matched_trusted.append(item)
+
+    impersonation_terms = sorted({term for term in IMPERSONATION_TERMS if term in normalized})
+
+    warning = ""
+    if matched_blocked:
+        names = ", ".join(item["label"] for item in matched_blocked)
+        warning = (
+            f"Nội dung trùng với mục trong DANH SÁCH ĐEN của Cụ ({names}). "
+            "Tuyệt đối không làm theo, không chuyển tiền và không cung cấp mã xác thực."
+        )
+    elif impersonation_terms and not matched_trusted:
+        warning = (
+            "Nội dung nhắc tới đơn vị/cơ quan uy tín nhưng KHÔNG khớp danh bạ đáng tin của Cụ. "
+            "Hãy tự gọi lại bằng số chính thức đã lưu, tuyệt đối không gọi theo số trong tin nhắn."
+        )
+
+    return {
+        "matchedTrusted": matched_trusted,
+        "matchedBlocked": matched_blocked,
+        "impersonationTerms": impersonation_terms,
+        "warning": warning,
+    }
+
+
+def apply_impersonation(alert_level, reply_text, impersonation, skip_terms=False):
+    """Nâng mức cảnh báo và chèn lời nhắc khi phát hiện dấu hiệu giả danh."""
+    level = alert_level
+    text = reply_text or ""
+    warning = impersonation["warning"]
+    # Nội dung đã khớp khuyến mãi chính thức của nhà mạng thì bỏ qua cảnh báo chung,
+    # nhưng vẫn ưu tiên cảnh báo khi trùng danh sách đen của Cụ.
+    if skip_terms and not impersonation["matchedBlocked"]:
+        warning = ""
+    if impersonation["matchedBlocked"]:
+        level = "red"
+    elif warning and level == "green":
+        level = "orange"
+    if warning:
+        text = "⚠️ " + warning + "\n\n" + text
+    return level, text
+
+
 OFFICIAL_CARRIER_DOMAINS = ("vnpt.com.vn", "vinaphone.com.vn")
 
 
@@ -296,7 +430,7 @@ def is_official_carrier_promotion(message):
     urls = re.findall(r"https?://[^\s<>\"']+", str(message or ""), re.IGNORECASE)
     if not urls or not any(term in normalized for term in ("vinaphone", "vnpt")):
         return False
-    if not any(term in normalized for term in ("khuyen mai", "khuyen mai", "chuong trinh", "tham gia")):
+    if not any(term in normalized for term in ("khuyen mai", "chuong trinh", "tham gia")):
         return False
 
     for candidate in urls:
@@ -1267,6 +1401,419 @@ def clear_diary():
 groq_api_key = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=groq_api_key) if groq_api_key else None
 
+
+# =====================================================================
+# Ý TƯỞNG 1: DANH BẠ SỐ/TÊN ĐÁNG TIN (và danh sách đen)
+# =====================================================================
+TRUSTED_CONTACT_KINDS = {"trusted", "blocked"}
+
+
+@app.route('/api/trusted-contacts', methods=['GET'])
+@login_required
+def list_trusted_contacts():
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT id, label, identifier, kind, created_at FROM trusted_contacts WHERE user_phone = ? ORDER BY kind, created_at DESC",
+            (session["user_phone"],),
+        ).fetchall()
+    return jsonify({"contacts": [dict(row) for row in rows]})
+
+
+@app.route('/api/trusted-contacts', methods=['POST'])
+@login_required
+def create_trusted_contact():
+    data = request.get_json(silent=True) or {}
+    label = str(data.get("label") or "").strip()
+    identifier = str(data.get("identifier") or "").strip()
+    kind = str(data.get("kind") or "trusted").strip().lower()
+    if not 2 <= len(label) <= 60:
+        return jsonify({"error": "Tên gợi nhớ cần từ 2 đến 60 ký tự."}), 400
+    if len(identifier) > 60:
+        return jsonify({"error": "Số điện thoại hoặc định danh quá dài."}), 400
+    if kind not in TRUSTED_CONTACT_KINDS:
+        return jsonify({"error": "Loại danh bạ chưa hợp lệ."}), 400
+    now = int(time.time())
+    contact_id = secrets.token_urlsafe(12)
+    with get_db() as connection:
+        total = connection.execute(
+            "SELECT COUNT(*) AS total FROM trusted_contacts WHERE user_phone = ?",
+            (session["user_phone"],),
+        ).fetchone()["total"]
+        if total >= 100:
+            return jsonify({"error": "Danh bạ đã đầy 100 mục. Cụ hãy xóa bớt trước khi thêm."}), 409
+        connection.execute(
+            "INSERT INTO trusted_contacts (id, user_phone, label, identifier, kind, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (contact_id, session["user_phone"], label, identifier, kind, now),
+        )
+    return jsonify({"id": contact_id, "label": label, "identifier": identifier, "kind": kind, "created_at": now}), 201
+
+
+@app.route('/api/trusted-contacts/<contact_id>', methods=['DELETE'])
+@login_required
+def delete_trusted_contact(contact_id):
+    with get_db() as connection:
+        cursor = connection.execute(
+            "DELETE FROM trusted_contacts WHERE id = ? AND user_phone = ?",
+            (contact_id, session["user_phone"]),
+        )
+        if not cursor.rowcount:
+            return jsonify({"error": "Không tìm thấy mục cần xóa."}), 404
+    return jsonify({"removed": True})
+
+
+# =====================================================================
+# Ý TƯỞNG 3: CHẾ ĐỘ NGƯỜI GIÁM HỘ (cảnh báo tới người thân đã liên kết)
+# =====================================================================
+GUARDIAN_DEDUPE_SECONDS = 300
+
+
+def record_guardian_alert(owner_phone, level, summary, source_excerpt):
+    """Lưu cảnh báo cho người giám hộ. Bỏ qua mức xanh và gộp cảnh báo trùng trong 5 phút."""
+    if level not in ("red", "orange"):
+        return None
+    now = int(time.time())
+    with get_db() as connection:
+        recent = connection.execute(
+            "SELECT 1 FROM guardian_alerts WHERE owner_phone = ? AND level = ? AND created_at > ? LIMIT 1",
+            (owner_phone, level, now - GUARDIAN_DEDUPE_SECONDS),
+        ).fetchone()
+        if recent:
+            return None
+        alert_id = secrets.token_urlsafe(12)
+        connection.execute(
+            "INSERT INTO guardian_alerts (id, owner_phone, level, summary, source_excerpt, created_at, acknowledged) VALUES (?, ?, ?, ?, ?, ?, 0)",
+            (alert_id, owner_phone, level, str(summary or "")[:500], str(source_excerpt or "")[:500], now),
+        )
+    return alert_id
+
+
+def guardian_alert_to_dict(row):
+    return {
+        "id": row["id"],
+        "owner": row["owner_phone"],
+        "level": row["level"],
+        "summary": row["summary"],
+        "sourceExcerpt": row["source_excerpt"],
+        "createdAt": row["created_at"],
+        "acknowledged": bool(row["acknowledged"]),
+    }
+
+
+@app.route('/api/guardian/alerts', methods=['GET'])
+@login_required
+def list_guardian_alerts():
+    user_phone = session["user_phone"]
+    with get_db() as connection:
+        mine = connection.execute(
+            "SELECT * FROM guardian_alerts WHERE owner_phone = ? ORDER BY created_at DESC LIMIT 50",
+            (user_phone,),
+        ).fetchall()
+        family = connection.execute(
+            "SELECT guardian_alerts.* FROM guardian_alerts JOIN family_links ON family_links.owner_phone = guardian_alerts.owner_phone WHERE family_links.member_phone = ? AND family_links.status = 'accepted' ORDER BY guardian_alerts.created_at DESC LIMIT 50",
+            (user_phone,),
+        ).fetchall()
+    return jsonify({
+        "mine": [guardian_alert_to_dict(row) for row in mine],
+        "family": [guardian_alert_to_dict(row) for row in family],
+    })
+
+
+@app.route('/api/guardian/alerts/<alert_id>/ack', methods=['POST'])
+@login_required
+def acknowledge_guardian_alert(alert_id):
+    user_phone = session["user_phone"]
+    with get_db() as connection:
+        cursor = connection.execute(
+            "UPDATE guardian_alerts SET acknowledged = 1 WHERE id = ? AND (owner_phone = ? OR owner_phone IN (SELECT owner_phone FROM family_links WHERE member_phone = ? AND status = 'accepted'))",
+            (alert_id, user_phone, user_phone),
+        )
+        if not cursor.rowcount:
+            return jsonify({"error": "Không tìm thấy cảnh báo cần xác nhận."}), 404
+    return jsonify({"acknowledged": True})
+
+
+# =====================================================================
+# LỊCH SỬ LỪA ĐẢO: tổng hợp mọi lượt kiểm tra + thống kê theo mức
+# =====================================================================
+@app.route('/api/history', methods=['GET'])
+@login_required
+def scam_history():
+    user_phone = session["user_phone"]
+    with get_db() as connection:
+        entries = connection.execute(
+            "SELECT id, created_at, source_text, alert_level, status FROM diary_entries WHERE user_phone = ? ORDER BY created_at DESC LIMIT 200",
+            (user_phone,),
+        ).fetchall()
+        feedback_rows = connection.execute(
+            "SELECT ai_level, verdict FROM scam_feedback WHERE user_phone = ?",
+            (user_phone,),
+        ).fetchall()
+        alert_total = connection.execute(
+            "SELECT COUNT(*) AS total FROM guardian_alerts WHERE owner_phone = ?",
+            (user_phone,),
+        ).fetchone()["total"]
+
+    totals = {"red": 0, "orange": 0, "green": 0}
+    for row in entries:
+        lvl = row["alert_level"] if row["alert_level"] in totals else "orange"
+        totals[lvl] += 1
+
+    feedback = {"correct": 0, "wrong": 0}
+    for row in feedback_rows:
+        if row["verdict"] in feedback:
+            feedback[row["verdict"]] += 1
+
+    return jsonify({
+        "total": len(entries),
+        "totals": totals,
+        "feedback": feedback,
+        "guardianAlerts": alert_total,
+        "entries": [
+            {
+                "id": row["id"],
+                "createdAt": row["created_at"],
+                "level": row["alert_level"],
+                "status": row["status"],
+                "excerpt": (row["source_text"] or "")[:180],
+            }
+            for row in entries[:100]
+        ],
+    })
+
+
+# =====================================================================
+# Ý TƯỞNG 9: VÒNG LẶP HỌC CỘNG ĐỒNG (phản hồi đúng/sai cho AI)
+# =====================================================================
+@app.route('/api/scam-feedback', methods=['POST'])
+@login_required
+def submit_scam_feedback():
+    data = request.get_json(silent=True) or {}
+    verdict = str(data.get("verdict") or "").strip().lower()
+    if verdict not in ("correct", "wrong"):
+        return jsonify({"error": "Đánh giá chưa hợp lệ."}), 400
+    ai_level = str(data.get("aiLevel") or "orange").strip().lower()
+    if ai_level not in ("red", "orange", "green"):
+        ai_level = "orange"
+    feedback_id = secrets.token_urlsafe(12)
+    now = int(time.time())
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO scam_feedback (id, user_phone, diary_entry_id, source_excerpt, ai_level, verdict, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                feedback_id,
+                session["user_phone"],
+                str(data.get("entryId") or "")[:64],
+                str(data.get("sourceExcerpt") or "")[:500],
+                ai_level,
+                verdict,
+                str(data.get("note") or "")[:500],
+                now,
+            ),
+        )
+    return jsonify({"saved": True, "id": feedback_id}), 201
+
+
+@app.route('/api/community/insights', methods=['GET'])
+@login_required
+def community_insights():
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT ai_level, verdict, COUNT(*) AS total FROM scam_feedback GROUP BY ai_level, verdict",
+        ).fetchall()
+        phone_reports = connection.execute("SELECT COUNT(*) AS total FROM phone_reports").fetchone()["total"]
+        campaign_reports = connection.execute("SELECT COUNT(*) AS total FROM campaign_reports").fetchone()["total"]
+        active_alerts = connection.execute("SELECT COUNT(*) AS total FROM guardian_alerts WHERE acknowledged = 0").fetchone()["total"]
+
+    summary = {}
+    for row in rows:
+        bucket = summary.setdefault(row["ai_level"], {"correct": 0, "wrong": 0})
+        bucket[row["verdict"]] = row["total"]
+    return jsonify({
+        "feedback": summary,
+        "reports": {"phone": phone_reports, "campaign": campaign_reports},
+        "activeAlerts": active_alerts,
+    })
+
+
+# =====================================================================
+# Ý TƯỞNG 8: KHÓA AN TOÀN 1 CHẠM (tạm khóa mọi thao tác gửi tiền 30 phút)
+# =====================================================================
+@app.route('/api/safety-lock', methods=['GET', 'POST', 'DELETE'])
+@login_required
+def manage_safety_lock():
+    user_phone = session["user_phone"]
+    now = int(time.time())
+
+    if request.method == 'GET':
+        with get_db() as connection:
+            row = connection.execute(
+                "SELECT locked_until, reason FROM safety_lock WHERE user_phone = ?",
+                (user_phone,),
+            ).fetchone()
+        locked_until = row["locked_until"] if row else 0
+        active = bool(row and locked_until > now)
+        return jsonify({
+            "active": active,
+            "lockedUntil": locked_until,
+            "reason": row["reason"] if row else "",
+            "secondsRemaining": max(0, locked_until - now) if active else 0,
+        })
+
+    if request.method == 'DELETE':
+        with get_db() as connection:
+            connection.execute("DELETE FROM safety_lock WHERE user_phone = ?", (user_phone,))
+        return jsonify({"active": False, "secondsRemaining": 0})
+
+    data = request.get_json(silent=True) or {}
+    minutes = data.get("minutes", 30)
+    if isinstance(minutes, bool) or not isinstance(minutes, int) or not 5 <= minutes <= 120:
+        minutes = 30
+    reason = str(data.get("reason") or "Cụ tự khóa an toàn để bình tĩnh và xác minh trước khi làm bất cứ điều gì.")[:300]
+    locked_until = now + minutes * 60
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO safety_lock (user_phone, locked_until, reason, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_phone) DO UPDATE SET locked_until = excluded.locked_until, reason = excluded.reason, updated_at = excluded.updated_at",
+            (user_phone, locked_until, reason, now),
+        )
+    return jsonify({"active": True, "lockedUntil": locked_until, "reason": reason, "secondsRemaining": minutes * 60}), 201
+
+
+# =====================================================================
+# Ý TƯỞNG 10: CÀI ĐẶT TRỢ LÝ (vùng giọng đọc, chế độ rảnh tay)
+# =====================================================================
+VOICE_REGIONS = {"auto", "bac", "trung", "nam"}
+
+
+@app.route('/api/settings', methods=['GET', 'PUT'])
+@login_required
+def user_settings():
+    user_phone = session["user_phone"]
+    if request.method == 'GET':
+        with get_db() as connection:
+            row = connection.execute(
+                "SELECT voice_region, hands_free FROM user_settings WHERE user_phone = ?",
+                (user_phone,),
+            ).fetchone()
+        return jsonify({
+            "voiceRegion": row["voice_region"] if row else "auto",
+            "handsFree": bool(row["hands_free"]) if row else False,
+        })
+
+    data = request.get_json(silent=True) or {}
+    voice_region = str(data.get("voiceRegion") or "auto").strip().lower()
+    if voice_region not in VOICE_REGIONS:
+        return jsonify({"error": "Vùng giọng đọc chưa hợp lệ."}), 400
+    hands_free = 1 if data.get("handsFree") else 0
+    now = int(time.time())
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO user_settings (user_phone, voice_region, hands_free, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_phone) DO UPDATE SET voice_region = excluded.voice_region, hands_free = excluded.hands_free, updated_at = excluded.updated_at",
+            (user_phone, voice_region, hands_free, now),
+        )
+    return jsonify({"voiceRegion": voice_region, "handsFree": bool(hands_free)})
+
+
+# =====================================================================
+# Ý TƯỞNG 7: CHỮ KÝ SỐ NỘI DUNG CHÍNH THỨC
+# =====================================================================
+SIGNATURE_PATTERN = re.compile(r"\[SAFEAI-SIG:([0-9A-Fa-f]{8,32})\]")
+
+
+def sign_official_message(message):
+    normalized = " ".join(str(message or "").split())
+    secret = app.config["SECRET_KEY"]
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+    return hmac.new(secret, normalized.encode("utf-8"), hashlib.sha256).hexdigest()[:16].upper()
+
+
+def verify_embedded_signature(message):
+    match = SIGNATURE_PATTERN.search(str(message or ""))
+    if not match:
+        return ""
+    body = SIGNATURE_PATTERN.sub("", str(message or "")).strip()
+    expected = sign_official_message(body)
+    if hmac.compare_digest(match.group(1).upper(), expected):
+        return "✅ Nội dung này mang chữ ký số HỢP LỆ của SafeAI. Nội dung không bị sửa đổi trên đường truyền; Cụ vẫn nên xác minh người gửi."
+    return "⚠️ Nội dung ghi có chữ ký số SafeAI nhưng chữ ký KHÔNG khớp. Rất có thể nội dung đã bị sửa hoặc giả mạo. Cụ đừng làm theo."
+
+
+@app.route('/api/verify-signature', methods=['POST'])
+@login_required
+def verify_signature():
+    data = request.get_json(silent=True) or {}
+    message = str(data.get("message") or "")
+    if not message.strip():
+        return jsonify({"error": "Cụ hãy dán nội dung cần kiểm tra chữ ký."}), 400
+    signature = str(data.get("signature") or "").strip().upper()
+    body = SIGNATURE_PATTERN.sub("", message).strip()
+    expected = sign_official_message(body)
+    valid = bool(signature) and hmac.compare_digest(signature, expected)
+    return jsonify({"valid": valid})
+
+
+# =====================================================================
+# Ý TƯỞNG 4: PWA - MANIFEST, SERVICE WORKER VÀ SHARE TARGET
+# =====================================================================
+PWA_ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0068FF"/>
+  <path d="M256 96l128 52v112c0 84-54 148-128 172-74-24-128-88-128-172V148z" fill="#ffffff"/>
+  <path d="M206 262l36 36 70-78" fill="none" stroke="#0068FF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+SERVICE_WORKER_JS = """const CACHE_NAME = 'safeai-shell-v1';
+self.addEventListener('install', () => { self.skipWaiting(); });
+self.addEventListener('activate', (event) => { event.waitUntil(self.clients.claim()); });
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || Response.error()))
+  );
+});
+"""
+
+
+@app.route('/manifest.webmanifest')
+def pwa_manifest():
+    manifest = {
+        "name": "Trợ Lý An Toàn AI - SafeAI",
+        "short_name": "SafeAI",
+        "description": "Ứng dụng chống lừa đảo cho người cao tuổi Việt Nam.",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#0068FF",
+        "theme_color": "#0068FF",
+        "lang": "vi",
+        "icons": [
+            {"src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+            {"src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable"},
+        ],
+        "share_target": {
+            "action": "/share",
+            "method": "GET",
+            "params": {"title": "title", "text": "text", "url": "url"},
+        },
+    }
+    return Response(json.dumps(manifest, ensure_ascii=False), mimetype="application/manifest+json")
+
+
+@app.route('/pwa-icon.svg')
+def pwa_icon():
+    return Response(PWA_ICON_SVG, mimetype="image/svg+xml")
+
+
+@app.route('/sw.js')
+def service_worker():
+    return Response(SERVICE_WORKER_JS, mimetype="application/javascript")
+
+
+@app.route('/share')
+def share_target():
+    """Nhận nội dung được chia sẻ từ Zalo/SMS/trình duyệt và mở sẵn màn hình kiểm tra."""
+    return render_template('index.html')
+
+
 SYSTEM_PROMPT = """
 Bạn là AI chuyên phân tích tin nhắn SMS, thông báo, nội dung cuộc gọi được chép lại và nội dung trực tuyến có nguy cơ lừa đảo tại Việt Nam.
 
@@ -1606,10 +2153,14 @@ def check_scam():
 
         if not client:
             if is_official_carrier_promotion(user_message):
+                reply_text = official_carrier_promotion_reply() + '\n\nAI chưa được cấu hình; đây là nhận diện quy tắc hạn chế báo nhầm, không thay thế xác minh của nhà mạng.'
+                impersonation = detect_impersonation(session["user_phone"], user_message)
+                alert_level, reply_text = apply_impersonation('green', reply_text, impersonation, skip_terms=True)
+                record_guardian_alert(session["user_phone"], alert_level, reply_text, user_message)
                 return jsonify({
-                    'reply': official_carrier_promotion_reply() + '\n\nAI chưa được cấu hình; đây là nhận diện quy tắc hạn chế báo nhầm, không thay thế xác minh của nhà mạng.',
-                    'alert_level': 'green',
-                    'alert_color': '#2e7d32'
+                    'reply': reply_text,
+                    'alert_level': alert_level,
+                    'alert_color': ALERT_COLORS.get(alert_level, '#2e7d32')
                 })
 
             normalized_message = unicodedata.normalize('NFD', user_message.lower())
@@ -1647,13 +2198,19 @@ def check_scam():
                     'Không thể kết luận nội dung an toàn; cụ hãy xác minh với người thân hoặc đơn vị liên quan qua kênh chính thức.'
                 )
 
+            impersonation = detect_impersonation(session["user_phone"], user_message)
+            alert_level, reply_text = apply_impersonation(alert_level, reply_text, impersonation)
+            signature_note = verify_embedded_signature(user_message)
+            if signature_note:
+                reply_text = signature_note + "\n\n" + reply_text
+            record_guardian_alert(session["user_phone"], alert_level, reply_text, user_message)
             return jsonify({
                 'reply': reply_text,
                 'alert_level': alert_level,
-                'alert_color': '#e53935' if alert_level == 'red' else '#f57c00'
+                'alert_color': ALERT_COLORS.get(alert_level, '#f57c00')
             })
 
-                # Tên model chuẩn tuyệt đối không dính khoảng trắng
+        # Tên model chuẩn, tuyệt đối không dính khoảng trắng
         selected_model = "openai/gpt-oss-120b"
 
         chat_completion = client.chat.completions.create(
@@ -1708,12 +2265,22 @@ def check_scam():
             flags=re.IGNORECASE
         ).strip()
 
-        if is_official_carrier_promotion(user_message):
+        official_promo = is_official_carrier_promotion(user_message)
+        if official_promo:
             alert_level = "green"
             alert_color = "#2e7d32"
             reply_text = official_carrier_promotion_reply()
 
-        
+        impersonation = detect_impersonation(session["user_phone"], user_message)
+        alert_level, reply_text = apply_impersonation(alert_level, reply_text, impersonation, skip_terms=official_promo)
+        alert_color = ALERT_COLORS.get(alert_level, "#f57c00")
+
+        signature_note = verify_embedded_signature(user_message)
+        if signature_note:
+            reply_text = signature_note + "\n\n" + reply_text
+
+        record_guardian_alert(session["user_phone"], alert_level, reply_text, user_message)
+
         return jsonify({
             'reply': reply_text,
             'alert_level': alert_level,
@@ -1894,10 +2461,16 @@ Hãy phân tích trực tiếp toàn bộ hình ảnh, không chỉ đọc chữ
             count=1, flags=re.IGNORECASE,
         ).strip()
 
-        if is_official_carrier_promotion(extracted_text):
+        official_promo = is_official_carrier_promotion(extracted_text)
+        if official_promo:
             alert_level = "green"
             alert_color = "#2e7d32"
             reply_text = official_carrier_promotion_reply()
+
+        impersonation = detect_impersonation(session["user_phone"], extracted_text)
+        alert_level, reply_text = apply_impersonation(alert_level, reply_text, impersonation, skip_terms=official_promo)
+        alert_color = ALERT_COLORS.get(alert_level, "#f57c00")
+        record_guardian_alert(session["user_phone"], alert_level, reply_text, extracted_text)
 
         return jsonify({
             "reply": reply_text or "Cháu chưa thể đưa ra nhận xét chắc chắn về ảnh này. Cụ hãy kiểm tra lại với người thân hoặc đơn vị chính thức.",

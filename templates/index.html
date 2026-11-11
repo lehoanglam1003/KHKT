@@ -7,6 +7,15 @@
 
     <title>Trợ Lý An Toàn AI - Bảo Vệ Người Cao Tuổi</title>
 
+    <!-- PWA: cài lên màn hình chính và chia sẻ nội dung từ Zalo/SMS vào SafeAI -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#0068FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/pwa-icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg">
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -942,6 +951,8 @@
         .advanced-tools-list { display: grid; gap: 10px; }
         .advanced-tool-button { min-height: 58px; padding: 12px; text-align: left; font-size: 18px; }
         .advanced-tools-note { margin: 0 0 12px; color: #475569; font-size: 16px; line-height: 1.45; }
+        .tools-group-title { margin: 16px 0 8px; font-size: 14px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em; }
+        .tools-group-title:first-of-type { margin-top: 4px; }
         .shared-entry { padding: 11px 0; border-top: 1px solid #CBD5E1; }
         .shared-entry h3 { font-size: 16px; }
         .shared-entry p { margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -950,6 +961,48 @@
         .campaign-summary { color: #475569; font-size: 13px; line-height: 1.45; }
         .qr-result { margin-top: 9px; padding: 9px; border: 1px solid #CBD5E1; border-radius: 6px; overflow-wrap: anywhere; font-size: 14px; }
         .qr-result.danger { border-color: #FCA5A5; background: #FEF2F2; color: #991B1B; }
+
+        /* Bổ sung cho các tính năng mới: danh bạ, lịch sử, cộng đồng, cài đặt, khóa an toàn */
+        .tools-field { display: grid; gap: 6px; margin-bottom: 10px; }
+        .tools-field label { font-size: 15px; font-weight: 600; color: #334155; }
+        .tools-field input, .tools-field select {
+            min-height: 44px; padding: 8px 10px; border: 1px solid #94A3B8;
+            border-radius: 6px; background: white; font: inherit; font-size: 16px;
+        }
+        .tools-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .tools-actions .training-choice { flex: 1 1 46%; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+        .stat-card { padding: 10px; border-radius: 8px; text-align: center; color: white; }
+        .stat-card b { display: block; font-size: 26px; line-height: 1.1; }
+        .stat-card span { font-size: 13px; }
+        .stat-red { background: #DC2626; }
+        .stat-orange { background: #F57C00; }
+        .stat-green { background: #16A34A; }
+        .stat-neutral { background: #475569; }
+        .info-line { padding: 8px 0; border-top: 1px solid #E2E8F0; font-size: 15px; color: #334155; line-height: 1.5; }
+        .info-line:first-child { border-top: 0; }
+        .contact-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid #E2E8F0; }
+        .contact-item:first-child { border-top: 0; }
+        .contact-item .contact-meta { flex: 1; min-width: 0; }
+        .contact-item .contact-meta b { display: block; font-size: 16px; }
+        .contact-item .contact-meta span { color: #64748B; font-size: 14px; overflow-wrap: anywhere; }
+        .contact-item > div { flex: 1; min-width: 0; }
+        .contact-item > div b { display: block; font-size: 16px; }
+        .contact-item .info-line { overflow-wrap: anywhere; }
+        .contact-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px; font-size: 12px; color: white; }
+        .tag-trusted { background: #16A34A; }
+        .tag-blocked { background: #DC2626; }
+        .mini-btn { min-height: 38px; padding: 6px 12px; border: 1px solid #94A3B8; border-radius: 6px; background: #F8FAFC; color: #1E293B; font: inherit; font-size: 14px; }
+        .mini-btn.danger { border-color: #FCA5A5; background: #FEF2F2; color: #991B1B; }
+        .feedback-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+        .feedback-row .mini-btn { flex: 1 1 42%; }
+        .feedback-row span { font-size: 14px; color: #475569; }
+        .feedback-thanks { font-size: 14px; color: #15803D; font-weight: 600; }
+        .lock-banner {
+            display: none; align-items: center; gap: 8px; padding: 9px 14px;
+            background: #FEF3C7; border-bottom: 1px solid #FCD34D; color: #92400E; font-size: 14px;
+        }
+        .lock-banner.show { display: flex; }
 
         @media (max-width: 380px) {
             .brake-panel { padding: 14px; }
@@ -1350,14 +1403,45 @@
 <div id="advanced-tools-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-tools-title">
     <section class="feature-panel">
         <div class="feature-heading">
-            <h2 id="advanced-tools-title">Công cụ</h2>
+            <h2 id="advanced-tools-title">Công cụ &amp; tiện ích</h2>
             <button class="feature-close" type="button" onclick="closeAdvancedTools()" aria-label="Đóng">&times;</button>
         </div>
-        <p class="advanced-tools-note">Chọn một chức năng. Màn hình kiểm tra chính chỉ giữ các thao tác cần dùng hằng ngày.</p>
+        <p class="advanced-tools-note">Tất cả chức năng nâng cao nằm gọn trong màn hình này. Màn hình kiểm tra chính chỉ giữ các thao tác dùng hằng ngày.</p>
+
+        <h3 class="tools-group-title">Kiểm tra &amp; tra cứu</h3>
         <div class="advanced-tools-list">
             <button class="training-choice advanced-tool-button" type="button" onclick="openLookup()"><i class="fa-solid fa-link"></i> Tra cứu link / số điện thoại</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openSignatureCheck()"><i class="fa-solid fa-signature"></i> Kiểm tra chữ ký số nội dung</button>
+        </div>
+
+        <h3 class="tools-group-title">Bảo vệ &amp; an toàn</h3>
+        <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openTrustedContacts()"><i class="fa-solid fa-address-book"></i> Danh bạ đáng tin &amp; danh sách đen</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="toggleSafetyLockFromTools()"><i class="fa-solid fa-lock"></i> Khóa an toàn 1 chạm (30 phút)</button>
+        </div>
+
+        <h3 class="tools-group-title">Lịch sử &amp; cộng đồng</h3>
+        <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openHistory()"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử lừa đảo &amp; thống kê</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openCommunity()"><i class="fa-solid fa-bullhorn"></i> Bảng tin cộng đồng</button>
+        </div>
+
+        <h3 class="tools-group-title">Học &amp; xử lý sự cố</h3>
+        <div class="advanced-tools-list">
             <button class="training-choice advanced-tool-button" type="button" onclick="openTraining()"><i class="fa-solid fa-graduation-cap"></i> Luyện tập nhận biết lừa đảo</button>
             <button class="training-choice advanced-tool-button" type="button" onclick="openDiary()"><i class="fa-solid fa-book-open"></i> Nhật ký xử lý</button>
+        </div>
+
+        <h3 class="tools-group-title">Người thân</h3>
+        <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openGuardianAlerts()"><i class="fa-solid fa-shield-heart"></i> Cảnh báo cho người giám hộ</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openSharedDiary()"><i class="fa-solid fa-users-viewfinder"></i> Nhật ký người thân chia sẻ</button>
+            <button class="training-choice advanced-tool-button" type="button" onclick="openProfile()"><i class="fa-solid fa-people-roof"></i> Vòng tròn người thân &amp; hồ sơ</button>
+        </div>
+
+        <h3 class="tools-group-title">Cài đặt trợ lý</h3>
+        <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openSettings()"><i class="fa-solid fa-sliders"></i> Giọng đọc theo vùng miền &amp; rảnh tay</button>
         </div>
     </section>
 </div>
@@ -1376,6 +1460,131 @@
             <p class="lookup-note">Tra link gửi URL tới Google Safe Browsing. QR được giải mã trên thiết bị; không tự mở link. Chỉ báo cáo cộng đồng sau khi xác nhận.</p>
             <div id="lookup-result" class="lookup-result" aria-live="polite"></div>
         </div>
+    </section>
+</div>
+
+<div id="signature-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="signature-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="signature-title"><i class="fa-solid fa-signature"></i> Kiểm tra chữ ký số</h2>
+            <button class="feature-close" type="button" onclick="closeSignatureCheck()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Dán nguyên nội dung có kèm mã chữ ký dạng <b>[SAFEAI-SIG:...]</b>. SafeAI sẽ kiểm tra xem nội dung có bị sửa đổi trên đường truyền hay không.</p>
+        <div class="tools-field">
+            <label for="signature-message">Nội dung kèm mã chữ ký</label>
+            <textarea id="signature-message" rows="4" maxlength="5000" placeholder="Dán nội dung (bao gồm cả mã [SAFEAI-SIG:...])"></textarea>
+        </div>
+        <div class="tools-actions">
+            <button class="training-choice" type="button" onclick="checkSignature()"><i class="fa-solid fa-magnifying-glass"></i> Kiểm tra chữ ký</button>
+        </div>
+        <div id="signature-result" class="training-feedback" aria-live="polite"></div>
+    </section>
+</div>
+
+<div id="trusted-contacts-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="trusted-contacts-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="trusted-contacts-title"><i class="fa-solid fa-address-book"></i> Danh bạ đáng tin</h2>
+            <button class="feature-close" type="button" onclick="closeTrustedContacts()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Lưu tên và số của người thân, cơ quan, ngân hàng mà Cụ tin cậy. Khi tin nhắn nhắc tới các đơn vị này, SafeAI sẽ đối chiếu để cảnh báo giả danh. Cụ cũng có thể lưu <b>danh sách đen</b> những số/tên đã từng lừa mình.</p>
+        <div class="tools-field">
+            <label for="trusted-label">Tên gợi nhớ</label>
+            <input type="text" id="trusted-label" maxlength="60" placeholder="Ví dụ: Con trai Minh, Ngân hàng Vietcombank...">
+        </div>
+        <div class="tools-field">
+            <label for="trusted-identifier">Số điện thoại hoặc định danh (nếu có)</label>
+            <input type="text" id="trusted-identifier" maxlength="60" placeholder="Ví dụ: 0912345678">
+        </div>
+        <div class="tools-field">
+            <label for="trusted-kind">Phân loại</label>
+            <select id="trusted-kind">
+                <option value="trusted">Người/đơn vị ĐÁNG TIN</option>
+                <option value="blocked">Số/Tên trong DANH SÁCH ĐEN</option>
+            </select>
+        </div>
+        <div class="tools-actions">
+            <button class="training-choice" type="button" onclick="addTrustedContact()"><i class="fa-solid fa-plus"></i> Thêm vào danh bạ</button>
+        </div>
+        <div id="trusted-contacts-status" class="training-feedback" aria-live="polite"></div>
+        <div id="trusted-contacts-list"></div>
+    </section>
+</div>
+
+<div id="history-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="history-title"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử lừa đảo</h2>
+            <button class="feature-close" type="button" onclick="closeHistory()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Toàn bộ lượt kiểm tra của Cụ được ghi lại để tra cứu về sau và thống kê mức độ nguy hiểm.</p>
+        <div class="stat-grid">
+            <div class="stat-card stat-red"><b id="history-red">0</b><span>Nguy hiểm</span></div>
+            <div class="stat-card stat-orange"><b id="history-orange">0</b><span>Đáng ngờ</span></div>
+            <div class="stat-card stat-green"><b id="history-green">0</b><span>An toàn</span></div>
+        </div>
+        <div class="info-line" id="history-summary">Đang tải lịch sử...</div>
+        <div id="history-list"></div>
+    </section>
+</div>
+
+<div id="community-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="community-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="community-title"><i class="fa-solid fa-bullhorn"></i> Bảng tin cộng đồng</h2>
+            <button class="feature-close" type="button" onclick="closeCommunity()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Mỗi lần Cụ đánh giá "đúng/sai" cho kết quả của SafeAI, hệ thống học thêm để cảnh báo chính xác hơn cho cộng đồng. Số liệu dưới đây là tổng hợp ẩn danh.</p>
+        <div class="stat-grid">
+            <div class="stat-card stat-neutral"><b id="community-feedback-total">0</b><span>Lượt đánh giá</span></div>
+            <div class="stat-card stat-neutral"><b id="community-phone-reports">0</b><span>Báo cáo số</span></div>
+            <div class="stat-card stat-neutral"><b id="community-campaign-reports">0</b><span>Báo cáo link</span></div>
+        </div>
+        <div id="community-detail"></div>
+    </section>
+</div>
+
+<div id="guardian-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="guardian-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="guardian-title"><i class="fa-solid fa-shield-heart"></i> Cảnh báo người giám hộ</h2>
+            <button class="feature-close" type="button" onclick="closeGuardianAlerts()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Khi Cụ hoặc người thân đã liên kết gặp nội dung nguy hiểm, cảnh báo sẽ được ghi lại ở đây để cả nhà cùng biết và hỗ trợ kịp thời.</p>
+        <h3 class="tools-group-title">Cảnh báo của người thân gửi tới Cụ</h3>
+        <div id="guardian-family-list"></div>
+        <h3 class="tools-group-title">Cảnh báo SafeAI đã ghi cho Cụ</h3>
+        <div id="guardian-mine-list"></div>
+    </section>
+</div>
+
+<div id="settings-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="settings-title"><i class="fa-solid fa-sliders"></i> Cài đặt trợ lý</h2>
+            <button class="feature-close" type="button" onclick="closeSettings()" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="tools-field">
+            <label for="settings-voice-region">Giọng đọc theo vùng miền</label>
+            <select id="settings-voice-region">
+                <option value="auto">Tự động (theo máy)</option>
+                <option value="bac">Giọng miền Bắc</option>
+                <option value="trung">Giọng miền Trung</option>
+                <option value="nam">Giọng miền Nam</option>
+            </select>
+        </div>
+        <div class="tools-field">
+            <label for="settings-hands-free">Chế độ rảnh tay (tự nghe rồi tự đọc)</label>
+            <select id="settings-hands-free">
+                <option value="off">Tắt</option>
+                <option value="on">Bật – Cụ chỉ cần nói, không cần bấm</option>
+            </select>
+        </div>
+        <div class="tools-actions">
+            <button class="training-choice" type="button" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt</button>
+            <button class="training-choice" type="button" onclick="toggleSafetyLockFromTools()"><i class="fa-solid fa-lock"></i> Khóa an toàn 30 phút</button>
+        </div>
+        <div id="settings-status" class="training-feedback" aria-live="polite"></div>
     </section>
 </div>
 
@@ -1402,9 +1611,19 @@
         <span class="demo-mode-flag" id="demo-mode-flag">Demo mode</span>
     </div>
 
+    <!-- Băng báo khóa an toàn: chỉ hiện khi Cụ đang bật khóa -->
+    <div class="lock-banner" id="lock-banner">
+        <i class="fa-solid fa-lock"></i>
+        <span id="lock-banner-text">Đang bật khóa an toàn.</span>
+        <button class="diary-open-btn" type="button" onclick="toggleSafetyLockFromTools()">MỞ KHÓA</button>
+    </div>
+
     <div class="diary-toolbar">
         <span id="diary-count">Chưa có lượt kiểm tra nào được lưu</span>
-        <button class="diary-open-btn" type="button" onclick="openAdvancedTools()"><i class="fa-solid fa-toolbox"></i> Công cụ</button>
+        <div style="display:flex; gap:6px;">
+            <button class="diary-open-btn" type="button" onclick="toggleSafetyLockFromTools()"><i class="fa-solid fa-lock"></i> Khóa</button>
+            <button class="diary-open-btn" type="button" onclick="openAdvancedTools()"><i class="fa-solid fa-toolbox"></i> Công cụ</button>
+        </div>
     </div>
 
     <!-- Chat Body -->
@@ -1585,6 +1804,8 @@
         } catch (error) {
             console.warn("Chưa tải được thiết lập người thân:", error);
         }
+        await loadSettings();
+        await refreshSafetyLock();
     }
 
     async function migrateLegacyDiary(phone) {
@@ -1650,6 +1871,10 @@
         currentUserPhone = null;
         diaryEntriesCache = [];
         emergencyContacts = ["", ""];
+        voiceRegionPreference = "auto";
+        handsFreeEnabled = false;
+        safetyLockState = { active: false, lockedUntil: 0, secondsRemaining: 0, reason: "" };
+        renderSafetyLock();
         closeProfile();
         closeDiary();
         document.getElementById("login-screen").style.display = "flex";
@@ -1847,6 +2072,7 @@
     }
 
     async function openSharedDiary() {
+        closeAdvancedTools();
         const modal = document.getElementById("shared-diary-modal");
         const list = document.getElementById("shared-diary-list");
         list.textContent = "Đang tải hồ sơ...";
@@ -1921,6 +2147,573 @@
     function closeLookup() {
         document.getElementById("lookup-modal").style.display = "none";
     }
+
+    /* ================================================================
+       CÁC CÔNG CỤ NÂNG CAO: chữ ký số, danh bạ, lịch sử, cộng đồng,
+       người giám hộ, khóa an toàn 1 chạm và cài đặt trợ lý.
+       ================================================================ */
+    let voiceRegionPreference = "auto";
+    let handsFreeEnabled = false;
+    let safetyLockState = { active: false, lockedUntil: 0, secondsRemaining: 0, reason: "" };
+
+    function decodeSafe(value) {
+        try { return decodeURIComponent(value || ""); } catch (error) { return value || ""; }
+    }
+
+    function requireLoginForFeature() {
+        if (!currentUserPhone) {
+            alert("Cụ vui lòng đăng nhập tài khoản để dùng chức năng này nhé.");
+            return false;
+        }
+        return true;
+    }
+
+    function showToolsStatus(elementId, text, tone) {
+        const box = document.getElementById(elementId);
+        if (!box) return;
+        box.textContent = text || "";
+        box.style.color = tone === "error" ? "#B91C1C" : tone === "success" ? "#15803D" : "#334155";
+    }
+
+    /* ---------- Chữ ký số nội dung chính thức ---------- */
+    function openSignatureCheck() {
+        closeAdvancedTools();
+        document.getElementById("signature-modal").style.display = "flex";
+        document.getElementById("signature-result").textContent = "";
+        document.getElementById("signature-message").focus();
+    }
+
+    function closeSignatureCheck() {
+        document.getElementById("signature-modal").style.display = "none";
+    }
+
+    async function checkSignature() {
+        if (!requireLoginForFeature()) return;
+        const message = document.getElementById("signature-message").value.trim();
+        if (!message) {
+            showToolsStatus("signature-result", "Cụ hãy dán nội dung kèm mã chữ ký [SAFEAI-SIG:...].", "error");
+            return;
+        }
+        showToolsStatus("signature-result", "Đang kiểm tra chữ ký...");
+        try {
+            const response = await fetch("/api/verify-signature", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa kiểm tra được chữ ký.");
+            const hasSignature = /\[SAFEAI-SIG:[0-9A-Fa-f]{8,32}\]/.test(message);
+            if (!hasSignature) {
+                showToolsStatus("signature-result", "Nội dung này KHÔNG kèm mã chữ ký SafeAI. Cụ hãy xác minh người gửi qua kênh chính thức.", "error");
+            } else if (data.valid) {
+                showToolsStatus("signature-result", "✅ Chữ ký HỢP LỆ. Nội dung không bị sửa đổi trên đường truyền. Cụ vẫn nên xác minh người gửi.", "success");
+            } else {
+                showToolsStatus("signature-result", "⚠️ Chữ ký KHÔNG khớp. Nội dung có thể đã bị sửa hoặc giả mạo. Cụ đừng làm theo.", "error");
+            }
+        } catch (error) {
+            showToolsStatus("signature-result", error.message || "Không kết nối được máy chủ.", "error");
+        }
+    }
+
+    /* ---------- Danh bạ đáng tin & danh sách đen ---------- */
+    function openTrustedContacts() {
+        closeAdvancedTools();
+        document.getElementById("trusted-contacts-modal").style.display = "flex";
+        loadTrustedContacts();
+    }
+
+    function closeTrustedContacts() {
+        document.getElementById("trusted-contacts-modal").style.display = "none";
+    }
+
+    async function loadTrustedContacts() {
+        const list = document.getElementById("trusted-contacts-list");
+        if (!requireLoginForFeature()) {
+            list.textContent = "Cụ hãy đăng nhập để dùng danh bạ.";
+            return;
+        }
+        list.textContent = "Đang tải danh bạ...";
+        try {
+            const response = await fetch("/api/trusted-contacts");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa tải được danh bạ.");
+            renderTrustedContacts(data.contacts || []);
+        } catch (error) {
+            list.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    function renderTrustedContacts(contacts) {
+        const list = document.getElementById("trusted-contacts-list");
+        list.replaceChildren();
+        if (!contacts.length) {
+            list.textContent = "Danh bạ đang trống. Cụ hãy thêm người thân, ngân hàng hoặc số trong danh sách đen.";
+            return;
+        }
+        contacts.forEach(function (item) {
+            const row = document.createElement("div");
+            row.className = "contact-item";
+            const info = document.createElement("div");
+            const name = document.createElement("b");
+            name.textContent = item.label;
+            const detail = document.createElement("div");
+            detail.className = "info-line";
+            detail.textContent = item.identifier || "Không có số/định danh";
+            const tag = document.createElement("span");
+            tag.className = "contact-tag " + (item.kind === "blocked" ? "tag-blocked" : "tag-trusted");
+            tag.textContent = item.kind === "blocked" ? "Danh sách đen" : "Đáng tin";
+            info.append(name, detail, tag);
+            const remove = document.createElement("button");
+            remove.className = "mini-btn";
+            remove.type = "button";
+            remove.textContent = "Xóa";
+            remove.onclick = function () { deleteTrustedContact(item.id); };
+            row.append(info, remove);
+            list.appendChild(row);
+        });
+    }
+
+    async function addTrustedContact() {
+        if (!requireLoginForFeature()) return;
+        const label = document.getElementById("trusted-label").value.trim();
+        const identifier = document.getElementById("trusted-identifier").value.trim();
+        const kind = document.getElementById("trusted-kind").value;
+        if (label.length < 2) {
+            showToolsStatus("trusted-contacts-status", "Tên gợi nhớ cần ít nhất 2 ký tự.", "error");
+            return;
+        }
+        showToolsStatus("trusted-contacts-status", "Đang lưu...");
+        try {
+            const response = await fetch("/api/trusted-contacts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ label, identifier, kind })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa lưu được danh bạ.");
+            document.getElementById("trusted-label").value = "";
+            document.getElementById("trusted-identifier").value = "";
+            showToolsStatus("trusted-contacts-status", "Đã thêm vào danh bạ.", "success");
+            loadTrustedContacts();
+        } catch (error) {
+            showToolsStatus("trusted-contacts-status", error.message || "Không kết nối được máy chủ.", "error");
+        }
+    }
+
+    async function deleteTrustedContact(contactId) {
+        if (!confirm("Cụ muốn xóa mục này khỏi danh bạ?")) return;
+        try {
+            const response = await fetch("/api/trusted-contacts/" + encodeURIComponent(contactId), { method: "DELETE" });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa xóa được.");
+            loadTrustedContacts();
+        } catch (error) {
+            showToolsStatus("trusted-contacts-status", error.message || "Không kết nối được máy chủ.", "error");
+        }
+    }
+
+    /* ---------- Lịch sử lừa đảo & thống kê ---------- */
+    function openHistory() {
+        closeAdvancedTools();
+        document.getElementById("history-modal").style.display = "flex";
+        loadHistory();
+    }
+
+    function closeHistory() {
+        document.getElementById("history-modal").style.display = "none";
+    }
+
+    async function loadHistory() {
+        const list = document.getElementById("history-list");
+        const summary = document.getElementById("history-summary");
+        if (!requireLoginForFeature()) {
+            summary.textContent = "Cụ hãy đăng nhập để xem lịch sử.";
+            list.replaceChildren();
+            return;
+        }
+        summary.textContent = "Đang tải lịch sử...";
+        list.replaceChildren();
+        try {
+            const response = await fetch("/api/history");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa tải được lịch sử.");
+            const totals = data.totals || { red: 0, orange: 0, green: 0 };
+            document.getElementById("history-red").textContent = totals.red || 0;
+            document.getElementById("history-orange").textContent = totals.orange || 0;
+            document.getElementById("history-green").textContent = totals.green || 0;
+            const feedback = data.feedback || { correct: 0, wrong: 0 };
+            summary.textContent = "Tổng " + (data.total || 0) + " lượt kiểm tra · "
+                + (feedback.correct || 0) + " đánh giá đúng · "
+                + (feedback.wrong || 0) + " đánh giá sai · "
+                + (data.guardianAlerts || 0) + " cảnh báo cho người giám hộ.";
+            const entries = data.entries || [];
+            if (!entries.length) {
+                list.textContent = "Chưa có lượt kiểm tra nào được ghi lại.";
+                return;
+            }
+            entries.forEach(function (entry) {
+                const card = document.createElement("div");
+                card.className = "contact-item";
+                const info = document.createElement("div");
+                const head = document.createElement("b");
+                head.textContent = "Mức " + String(entry.level || "").toUpperCase() + " · " + formatDiaryDate(entry.createdAt);
+                const excerpt = document.createElement("div");
+                excerpt.className = "info-line";
+                excerpt.textContent = entry.excerpt || "(không có nội dung trích xuất)";
+                info.append(head, excerpt);
+                card.appendChild(info);
+                list.appendChild(card);
+            });
+        } catch (error) {
+            summary.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    /* ---------- Bảng tin cộng đồng ---------- */
+    function openCommunity() {
+        closeAdvancedTools();
+        document.getElementById("community-modal").style.display = "flex";
+        loadCommunity();
+    }
+
+    function closeCommunity() {
+        document.getElementById("community-modal").style.display = "none";
+    }
+
+    async function loadCommunity() {
+        const detail = document.getElementById("community-detail");
+        if (!requireLoginForFeature()) {
+            detail.textContent = "Cụ hãy đăng nhập để xem bảng tin.";
+            return;
+        }
+        detail.textContent = "Đang tải bảng tin...";
+        try {
+            const response = await fetch("/api/community/insights");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa tải được bảng tin.");
+            const feedback = data.feedback || {};
+            let total = 0;
+            Object.keys(feedback).forEach(function (level) {
+                total += (feedback[level].correct || 0) + (feedback[level].wrong || 0);
+            });
+            document.getElementById("community-feedback-total").textContent = total;
+            document.getElementById("community-phone-reports").textContent = (data.reports && data.reports.phone) || 0;
+            document.getElementById("community-campaign-reports").textContent = (data.reports && data.reports.campaign) || 0;
+            detail.replaceChildren();
+            const labels = { red: "Mức đỏ", orange: "Mức cam", green: "Mức xanh" };
+            Object.keys(feedback).forEach(function (level) {
+                const line = document.createElement("div");
+                line.className = "info-line";
+                const bucket = feedback[level];
+                line.textContent = (labels[level] || level) + ": " + (bucket.correct || 0) + " đúng / " + (bucket.wrong || 0) + " sai.";
+                detail.appendChild(line);
+            });
+            const activeLine = document.createElement("div");
+            activeLine.className = "info-line";
+            activeLine.textContent = "Cảnh báo cộng đồng chưa xử lý: " + (data.activeAlerts || 0) + ".";
+            detail.appendChild(activeLine);
+        } catch (error) {
+            detail.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    /* ---------- Cảnh báo cho người giám hộ ---------- */
+    function openGuardianAlerts() {
+        closeAdvancedTools();
+        document.getElementById("guardian-modal").style.display = "flex";
+        loadGuardianAlerts();
+    }
+
+    function closeGuardianAlerts() {
+        document.getElementById("guardian-modal").style.display = "none";
+    }
+
+    async function loadGuardianAlerts() {
+        const familyBox = document.getElementById("guardian-family-list");
+        const mineBox = document.getElementById("guardian-mine-list");
+        if (!requireLoginForFeature()) {
+            familyBox.textContent = "Cụ hãy đăng nhập để xem cảnh báo.";
+            mineBox.replaceChildren();
+            return;
+        }
+        familyBox.textContent = "Đang tải cảnh báo...";
+        mineBox.textContent = "";
+        try {
+            const response = await fetch("/api/guardian/alerts");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa tải được cảnh báo.");
+            renderGuardianList(familyBox, data.family || [], true);
+            renderGuardianList(mineBox, data.mine || [], false);
+        } catch (error) {
+            familyBox.textContent = error.message || "Không kết nối được máy chủ.";
+        }
+    }
+
+    function renderGuardianList(box, alerts, fromFamily) {
+        box.replaceChildren();
+        if (!alerts.length) {
+            box.textContent = fromFamily
+                ? "Chưa có cảnh báo nào từ người thân."
+                : "Cụ chưa có cảnh báo nào được ghi lại.";
+            return;
+        }
+        alerts.forEach(function (alert) {
+            const card = document.createElement("div");
+            card.className = "contact-item";
+            const info = document.createElement("div");
+            const head = document.createElement("b");
+            head.textContent = "Mức " + String(alert.level || "").toUpperCase() + " · "
+                + formatDiaryDate(alert.createdAt) + (alert.acknowledged ? " · đã xác nhận" : "");
+            const body = document.createElement("div");
+            body.className = "info-line";
+            body.textContent = alert.summary || "(không có mô tả)";
+            info.append(head, body);
+            card.appendChild(info);
+            if (!alert.acknowledged) {
+                const ack = document.createElement("button");
+                ack.className = "mini-btn";
+                ack.type = "button";
+                ack.textContent = "Đã hiểu";
+                ack.onclick = function () { acknowledgeGuardianAlert(alert.id); };
+                card.appendChild(ack);
+            }
+            box.appendChild(card);
+        });
+    }
+
+    async function acknowledgeGuardianAlert(alertId) {
+        try {
+            const response = await fetch("/api/guardian/alerts/" + encodeURIComponent(alertId) + "/ack", { method: "POST" });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa xác nhận được.");
+            loadGuardianAlerts();
+        } catch (error) {
+            alert(error.message || "Không kết nối được máy chủ.");
+        }
+    }
+
+    /* ---------- Cài đặt trợ lý: vùng giọng đọc & rảnh tay ---------- */
+    function openSettings() {
+        closeAdvancedTools();
+        document.getElementById("settings-modal").style.display = "flex";
+        loadSettings();
+    }
+
+    function closeSettings() {
+        document.getElementById("settings-modal").style.display = "none";
+    }
+
+    async function loadSettings() {
+        if (!currentUserPhone) return;
+        try {
+            const response = await fetch("/api/settings");
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa tải được cài đặt.");
+            voiceRegionPreference = data.voiceRegion || "auto";
+            handsFreeEnabled = !!data.handsFree;
+            document.getElementById("settings-voice-region").value = voiceRegionPreference;
+            document.getElementById("settings-hands-free").value = handsFreeEnabled ? "on" : "off";
+        } catch (error) {
+            console.warn("Không tải được cài đặt trợ lý:", error);
+        }
+    }
+
+    async function saveSettings() {
+        if (!requireLoginForFeature()) return;
+        const voiceRegion = document.getElementById("settings-voice-region").value;
+        const handsFree = document.getElementById("settings-hands-free").value === "on";
+        showToolsStatus("settings-status", "Đang lưu...");
+        try {
+            const response = await fetch("/api/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ voiceRegion, handsFree })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa lưu được cài đặt.");
+            voiceRegionPreference = data.voiceRegion || "auto";
+            handsFreeEnabled = !!data.handsFree;
+            showToolsStatus("settings-status", "Đã lưu cài đặt trợ lý.", "success");
+        } catch (error) {
+            showToolsStatus("settings-status", error.message || "Không kết nối được máy chủ.", "error");
+        }
+    }
+
+    /* ---------- Khóa an toàn 1 chạm ---------- */
+    async function toggleSafetyLockFromTools() {
+        if (!requireLoginForFeature()) return;
+        await setSafetyLock(!safetyLockState.active);
+    }
+
+    async function setSafetyLock(enable) {
+        try {
+            const options = enable
+                ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ minutes: 30 }) }
+                : { method: "DELETE" };
+            const response = await fetch("/api/safety-lock", options);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa đổi được khóa an toàn.");
+            safetyLockState = {
+                active: !!data.active,
+                lockedUntil: data.lockedUntil || 0,
+                secondsRemaining: data.secondsRemaining || 0,
+                reason: data.reason || ""
+            };
+            renderSafetyLock();
+            alert(enable
+                ? "Đã bật khóa an toàn 30 phút. Cụ hãy bình tĩnh, không chuyển tiền hay cung cấp OTP trong lúc chờ xác minh."
+                : "Đã mở khóa an toàn.");
+        } catch (error) {
+            alert(error.message || "Không kết nối được máy chủ.");
+        }
+    }
+
+    async function refreshSafetyLock() {
+        if (!currentUserPhone) {
+            safetyLockState = { active: false, lockedUntil: 0, secondsRemaining: 0, reason: "" };
+            renderSafetyLock();
+            return;
+        }
+        try {
+            const response = await fetch("/api/safety-lock");
+            const data = await response.json();
+            if (!response.ok) return;
+            safetyLockState = {
+                active: !!data.active,
+                lockedUntil: data.lockedUntil || 0,
+                secondsRemaining: data.secondsRemaining || 0,
+                reason: data.reason || ""
+            };
+            renderSafetyLock();
+        } catch (error) {
+            /* im lặng khi mất kết nối */
+        }
+    }
+
+    function renderSafetyLock() {
+        const banner = document.getElementById("lock-banner");
+        const text = document.getElementById("lock-banner-text");
+        if (!banner) return;
+        if (safetyLockState.active) {
+            const minutes = Math.max(1, Math.round((safetyLockState.secondsRemaining || 0) / 60));
+            banner.classList.add("show");
+            if (text) {
+                text.textContent = "Đang bật khóa an toàn · còn khoảng " + minutes + " phút"
+                    + (safetyLockState.reason ? ": " + safetyLockState.reason : "");
+            }
+        } else {
+            banner.classList.remove("show");
+            if (text) text.textContent = "Đang bật khóa an toàn.";
+        }
+    }
+
+    /* ---------- Rảnh tay: tự nghe lại sau khi trợ lý đọc xong ---------- */
+    function maybeResumeHandsFree() {
+        if (!handsFreeEnabled || isVoiceCaptureRequested || !recognition) return;
+        setTimeout(function () {
+            if (!handsFreeEnabled || isVoiceCaptureRequested || !recognition) return;
+            isVoiceCaptureRequested = true;
+            startVoiceRecognitionSegment();
+        }, 700);
+    }
+
+    /* ---------- Nút "Gọi xác minh với con" & phản hồi đúng/sai ---------- */
+    function verifyCallMarkup(encodedAdvice) {
+        const encoded = (encodedAdvice || "").replace(/'/g, "%27");
+        return `<button class="speak-btn" style="background:#0F766E;" onclick="callTrustedContact('${encoded}')">`
+            + `<i class="fa-solid fa-phone"></i> Gọi xác minh với con`
+            + `</button>`;
+    }
+
+    function callTrustedContact(encodedAdvice) {
+        const advice = decodeSafe(encodedAdvice);
+        const contacts = (emergencyContacts || []).filter(function (phone) { return String(phone || "").trim(); });
+        if (!contacts.length) {
+            alert("Cụ chưa lưu số người thân. Vào Hồ sơ để thêm số con cháu trước nhé.");
+            openProfile();
+            return;
+        }
+        openZaloChat(contacts[0], advice);
+    }
+
+    function feedbackMarkup(entryId, level, excerpt) {
+        const safeId = String(entryId || ("fb-" + Math.random().toString(36).slice(2, 8))).replace(/[^A-Za-z0-9_-]/g, "");
+        const encodedExcerpt = encodeURIComponent(excerpt || "").replace(/'/g, "%27");
+        return `<div class="feedback-row" id="feedback-${safeId}">`
+            + `<span>Kết quả này có đúng không ạ?</span>`
+            + `<button class="mini-btn" type="button" onclick="submitResultFeedback('${safeId}','${level}','correct','${encodedExcerpt}')">Đúng</button>`
+            + `<button class="mini-btn" type="button" onclick="submitResultFeedback('${safeId}','${level}','wrong','${encodedExcerpt}')">Sai</button>`
+            + `</div>`;
+    }
+
+    async function submitResultFeedback(feedbackId, level, verdict, encodedExcerpt) {
+        if (!currentUserPhone) {
+            alert("Cụ vui lòng đăng nhập để gửi đánh giá nhé.");
+            return;
+        }
+        const row = document.getElementById("feedback-" + feedbackId);
+        if (row) row.querySelectorAll("button").forEach(function (button) { button.disabled = true; });
+        try {
+            const response = await fetch("/api/scam-feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    entryId: feedbackId,
+                    aiLevel: level,
+                    verdict: verdict,
+                    sourceExcerpt: decodeSafe(encodedExcerpt)
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Chưa gửi được đánh giá.");
+            if (row) {
+                row.innerHTML = '<span class="feedback-thanks"><i class="fa-solid fa-heart"></i> Cảm ơn Cụ! SafeAI đã ghi nhận để cảnh báo chính xác hơn cho cộng đồng.</span>';
+            }
+        } catch (error) {
+            if (row) row.querySelectorAll("button").forEach(function (button) { button.disabled = false; });
+            alert(error.message || "Không kết nối được máy chủ.");
+        }
+    }
+
+    /* ---------- PWA: service worker + nhận nội dung chia sẻ ---------- */
+    function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return;
+        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") return;
+        navigator.serviceWorker.register("/sw.js").catch(function (error) {
+            console.warn("Chưa đăng ký được service worker:", error);
+        });
+    }
+
+    function handleShareTarget() {
+        if (location.pathname !== "/share") return;
+        const params = new URLSearchParams(location.search);
+        const shared = [params.get("title"), params.get("text"), params.get("url")]
+            .filter(function (part) { return part && part.trim(); })
+            .join("\n")
+            .trim();
+        if (!shared) return;
+        const input = document.getElementById("userInput");
+        if (!input) return;
+        input.value = shared;
+        input.focus();
+        window.history.replaceState({}, "", "/");
+    }
+
+    function initExtraFeatures() {
+        registerServiceWorker();
+        handleShareTarget();
+        loadSettings();
+        refreshSafetyLock();
+        setInterval(function () {
+            if (!safetyLockState.active) return;
+            safetyLockState.secondsRemaining = Math.max(0, (safetyLockState.secondsRemaining || 0) - 60);
+            if (safetyLockState.secondsRemaining <= 0) safetyLockState.active = false;
+            renderSafetyLock();
+        }, 60000);
+    }
+
+    window.addEventListener("DOMContentLoaded", initExtraFeatures);
 
     async function lookupIndicator() {
         const input = document.getElementById("lookup-input");
@@ -2838,6 +3631,54 @@
 
 let currentUtterance = null;
 let speechStartTimer = null;
+let voiceWarningShown = false;
+let voicesReadyPromise = null;
+
+/* Một số trình duyệt trả danh sách giọng đọc rỗng ở lần gọi đầu tiên,
+   nên cần chờ sự kiện voiceschanged rồi mới chọn giọng. */
+function waitForVoices() {
+    if (voicesReadyPromise) return voicesReadyPromise;
+
+    voicesReadyPromise = new Promise(function (resolve) {
+        const available = window.speechSynthesis.getVoices();
+        if (available && available.length) {
+            resolve(available);
+            return;
+        }
+
+        let finished = false;
+        const done = function () {
+            if (finished) return;
+            finished = true;
+            resolve(window.speechSynthesis.getVoices());
+        };
+
+        window.speechSynthesis.addEventListener("voiceschanged", done, { once: true });
+        setTimeout(done, 1200);
+    });
+
+    return voicesReadyPromise;
+}
+
+
+/* Chọn giọng đọc tiếng Việt, ưu tiên theo vùng miền Cụ đã chọn. */
+function pickVietnameseVoice(voices) {
+    const vietnamese = (voices || []).filter(function (voice) {
+        return /^vi([_-]|$)/i.test(voice.lang);
+    });
+    if (!vietnamese.length) return null;
+    const regionHints = {
+        bac: /(hanoi|ha noi|hn\b|bac|north)/i,
+        trung: /(hue|da nang|danang|trung|central)/i,
+        nam: /(saigon|sai gon|ho chi minh|hcm|nam\b|south)/i
+    };
+    const hint = regionHints[voiceRegionPreference];
+    if (hint) {
+        const regional = vietnamese.find(function (voice) { return hint.test(voice.name); });
+        if (regional) return regional;
+    }
+    return vietnamese[0];
+}
 
 
 function speakText(inputData) {
@@ -2888,7 +3729,10 @@ function speakText(inputData) {
 
     if (!("speechSynthesis" in window) ||
         typeof SpeechSynthesisUtterance === "undefined") {
-        alert("Điện thoại chưa hỗ trợ đọc văn bản. Cụ vui lòng mở SafeAI bằng Chrome mới nhất.");
+        if (!voiceWarningShown) {
+            voiceWarningShown = true;
+            alert("Điện thoại chưa hỗ trợ đọc văn bản. Cụ vui lòng mở SafeAI bằng Chrome mới nhất.");
+        }
         return;
     }
 
@@ -2900,28 +3744,40 @@ function speakText(inputData) {
     window.speechSynthesis.cancel();
     currentUtterance = null;
 
-    speechStartTimer = setTimeout(function () {
+    speechStartTimer = setTimeout(async function () {
         speechStartTimer = null;
 
-        const voices = window.speechSynthesis.getVoices();
-        const vietnameseVoice = voices.find(function (voice) {
-            return /^vi([_-]|$)/i.test(voice.lang);
-        });
+        let voices = window.speechSynthesis.getVoices();
 
-        if (!vietnameseVoice) {
+        // Chờ thêm nếu trình duyệt chưa nạp xong danh sách giọng đọc.
+        if (!voices || voices.length === 0) {
+            voices = await waitForVoices();
+        }
+
+        const vietnameseVoice = pickVietnameseVoice(voices);
+
+        // Chỉ nhắc một lần duy nhất để không làm phiền Cụ ở các tin nhắn sau.
+        if (!vietnameseVoice && !voiceWarningShown) {
+            voiceWarningShown = true;
             alert(
                 "Điện thoại chưa có giọng đọc tiếng Việt. " +
                 "Cụ hãy vào Cài đặt > Đọc văn bản (Text-to-speech), " +
                 "tải giọng tiếng Việt rồi thử lại."
             );
-            return;
         }
+
+        // Vẫn đọc bằng giọng mặc định nếu chưa có giọng tiếng Việt.
+        const selectedVoice = vietnameseVoice || voices[0] || null;
 
         const utterance = new SpeechSynthesisUtterance(text);
         currentUtterance = utterance;
 
-        utterance.voice = vietnameseVoice;
-        utterance.lang = vietnameseVoice.lang || "vi-VN";
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            utterance.lang = selectedVoice.lang || "vi-VN";
+        } else {
+            utterance.lang = "vi-VN";
+        }
         utterance.rate = 0.85;
         utterance.pitch = 1;
         utterance.volume = 1;
@@ -2930,6 +3786,7 @@ function speakText(inputData) {
             if (currentUtterance === utterance) {
                 currentUtterance = null;
             }
+            maybeResumeHandsFree();
         };
 
         utterance.onerror = function (event) {
@@ -3015,6 +3872,8 @@ function speakText(inputData) {
                             onclick="sendAlertBySms('RED', '${encodedReply.replace(/'/g, "%27")}')">
                             <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
                         </button>
+                        ${verifyCallMarkup(encodedReply)}
+                        ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "red", text)}
                     </div>
                 `;
             } else if (alertLevel === "orange") {
@@ -3033,6 +3892,8 @@ function speakText(inputData) {
                             onclick="sendAlertBySms('ORANGE', '${encodedReply.replace(/'/g, "%27")}')">
                             <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
                         </button>
+                        ${verifyCallMarkup(encodedReply)}
+                        ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "orange", text)}
                     </div>
                 `;
             } else {
@@ -3046,6 +3907,7 @@ function speakText(inputData) {
                         <button class="speak-btn" onclick="speakText('${encodedReply}')">
                             <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
                         </button>
+                        ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "green", text)}
                     </div>
                 `;
             }
@@ -3082,6 +3944,31 @@ let interimTranscript = "";
 let voiceRestartTimer = null;
 let voiceStopTimeout = null;
 let voiceStopResolve = null;
+
+/* Gộp phần vừa nhận vào nội dung đã có, đồng thời cắt đoạn đuôi bị lặp.
+   Trình duyệt thường phát lại vài từ cuối mỗi khi nối lại micro sau
+   khoảng lặng, nếu cộng thẳng sẽ khiến nội dung bị lặp lại. */
+function mergeTranscript(baseText, newText) {
+    const base = (baseText || "").replace(/\s+/g, " ").trim();
+    const addition = (newText || "").replace(/\s+/g, " ").trim();
+
+    if (!base) return addition;
+    if (!addition) return base;
+
+    const baseWords = base.split(" ");
+    const addWords = addition.split(" ");
+    const maxOverlap = Math.min(baseWords.length, addWords.length);
+
+    for (let size = maxOverlap; size >= 1; size -= 1) {
+        const tail = baseWords.slice(-size).join(" ").toLowerCase();
+        const head = addWords.slice(0, size).join(" ").toLowerCase();
+        if (tail === head) {
+            return (base + " " + addWords.slice(size).join(" ")).trim();
+        }
+    }
+
+    return base + " " + addition;
+}
 
 const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3142,9 +4029,7 @@ if (SpeechRecognition) {
             .replace(/\s+/g, " ")
             .trim();
 
-        userInput.value = baseTranscript
-            ? baseTranscript + (newSpeech ? " " + newSpeech : "")
-            : newSpeech;
+        userInput.value = mergeTranscript(baseTranscript, newSpeech);
 
         userInput.dispatchEvent(
             new Event("input", { bubbles: true })
@@ -3184,9 +4069,7 @@ if (SpeechRecognition) {
                 .replace(/\s+/g, " ")
                 .trim();
 
-            userInput.value = baseTranscript
-                ? baseTranscript + (newSpeech ? " " + newSpeech : "")
-                : newSpeech;
+            userInput.value = mergeTranscript(baseTranscript, newSpeech);
         }
 
         if (voiceStopResolve) {
@@ -3300,53 +4183,134 @@ function stopRecordingState() {
 
 
 /* 6. BÁO ĐỘNG SOS */
-function triggerSOS() {
-    const accountPhone = currentUserPhone;
 
-    if (!accountPhone) {
+/* Nhận biết thiết bị di động để chọn cách mở Zalo phù hợp. */
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry/i.test(navigator.userAgent);
+}
+
+/* Chuẩn hóa số điện thoại Việt Nam về dạng 0xxxxxxxxx trước khi mở Zalo. */
+function normalizeZaloPhone(value) {
+    let clean = String(value || "").replace(/\D/g, "");
+    if (clean.startsWith("0084")) {
+        clean = "0" + clean.slice(4);
+    } else if (clean.startsWith("84")) {
+        clean = "0" + clean.slice(2);
+    }
+    return clean;
+}
+
+/* Sao chép nội dung cảnh báo theo cách đồng bộ để vẫn giữ được
+   "cử chỉ người dùng" cho tới lúc mở cửa sổ Zalo. */
+function copyTextForZalo(text) {
+    let copied = false;
+    try {
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.top = "-1000px";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.focus();
+        helper.select();
+        helper.setSelectionRange(0, helper.value.length);
+        copied = document.execCommand("copy");
+        document.body.removeChild(helper);
+    } catch (error) {
+        copied = false;
+    }
+
+    if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function () {});
+        copied = true;
+    }
+
+    return copied;
+}
+
+/* Mở ĐÚNG cửa sổ trò chuyện Zalo với số người thân.
+   - Trên điện thoại: điều hướng trực tiếp để Zalo bắt liên kết và mở ứng dụng.
+   - Trên máy tính: mở tab mới để giữ nguyên SafeAI.
+   Zalo không cho điền sẵn nội dung, nên SafeAI sao chép trước để Cụ chỉ cần dán. */
+function openZaloChat(phone, messageText) {
+    const cleanPhone = normalizeZaloPhone(phone);
+
+    if (!cleanPhone) {
+        alert("Số điện thoại người thân chưa hợp lệ. Cụ vui lòng kiểm tra lại trong Hồ sơ.");
+        return false;
+    }
+
+    const zaloUrl = "https://zalo.me/" + cleanPhone;
+    const copied = copyTextForZalo(messageText || "");
+    const guide = copied
+        ? "Đã sao chép nội dung cảnh báo.\n\n" +
+          "Trong Zalo, Cụ mở đúng cuộc trò chuyện với con/cháu, " +
+          "nhấn giữ ô soạn tin rồi chọn DÁN và bấm GỬI."
+        : "Zalo đang mở đúng cuộc trò chuyện với con/cháu.\n\n" +
+          "Cụ hãy dán nội dung cảnh báo vào ô soạn tin rồi bấm GỬI.";
+
+    if (isMobileDevice()) {
+        alert(guide);
+        window.location.href = zaloUrl;
+        return copied;
+    }
+
+    const opened = window.open(zaloUrl, "_blank", "noopener");
+    if (!opened) {
+        alert(
+            "Trình duyệt đang chặn cửa sổ Zalo.\n" +
+            "Cụ vui lòng cho phép mở cửa sổ mới rồi thử lại nhé."
+        );
+        return copied;
+    }
+
+    alert(guide);
+    return copied;
+}
+
+function triggerSOS() {
+    if (!currentUserPhone) {
         alert("⚠️ Cụ chưa đăng nhập tài khoản.");
         return;
     }
 
     let [phone1 = "", phone2 = ""] = emergencyContacts;
-
-    const formatPhone = (phone) => {
-        let clean = phone.replace(/\D/g, "");
-        if (clean.startsWith("84")) {
-            clean = "0" + clean.slice(2);
-        }
-        return clean;
-    };
-
-    phone1 = formatPhone(phone1);
-    phone2 = formatPhone(phone2);
+    phone1 = normalizeZaloPhone(phone1);
+    phone2 = normalizeZaloPhone(phone2);
 
     if (!phone1 && !phone2) {
         alert("⚠️ Cụ chưa cài số người thân SOS.");
         return;
     }
 
+    let phone = phone1 || phone2;
+
     if (phone1 && phone2) {
         const choice = prompt(
             "🚨 LIÊN HỆ KHẨN CẤP\n\n" +
             "Nhập 1 → Người thân 1\n" +
-            "Nhập 2 → Người thân 2"
+            "Nhập 2 → Người thân 2",
+            "1"
         );
 
         if (choice === "1") {
-            window.location.href = "https://zalo.me/" + phone1;
+            phone = phone1;
         } else if (choice === "2") {
-            window.location.href = "https://zalo.me/" + phone2;
+            phone = phone2;
         } else {
             alert("⚠️ Cụ chưa chọn người thân hợp lệ.");
-        }
-    } else {
-        const phone = phone1 || phone2;
-
-        if (confirm("🚨 Mở Zalo để liên hệ người thân?")) {
-            window.location.href = "https://zalo.me/" + phone;
+            return;
         }
     }
+
+    if (!confirm("🚨 Mở Zalo để liên hệ người thân?")) return;
+
+    const sosMessage =
+        "🚨 SAFEAI - CẦU CỨU KHẨN CẤP\n\n" +
+        "Ông/bà đang cần hỗ trợ gấp. Con/cháu vui lòng gọi lại ngay để xác minh.";
+
+    openZaloChat(phone, sosMessage);
 }
 
 /* 6.1. GỬI CẢNH BÁO ĐỎ CHO NGƯỜI THÂN QUA ZALO */
@@ -3391,31 +4355,14 @@ function sendAlertToZalo(level, message, advice) {
         "Người thân vui lòng gọi điện hỏi thăm và hỗ trợ cụ xác minh.\n\n" +
         "Khuyến cáo: Không chuyển tiền, không cung cấp OTP hoặc mật khẩu khi chưa xác minh.";
 
-    const cleanPhone = phone.replace(/\D/g, "");
-    const zaloPhone = cleanPhone.startsWith("84")
-        ? "0" + cleanPhone.slice(2)
-        : cleanPhone;
-
     if (!confirm(
-        "SafeAI sẽ mở Zalo để cụ liên hệ người thân.\n" +
-        "Cụ sẽ cần dán nội dung cảnh báo và tự bấm Gửi."
+        "SafeAI sẽ sao chép nội dung cảnh báo và mở đúng cuộc trò chuyện Zalo với người thân.\n" +
+        "Cụ đồng ý tiếp tục chứ?"
     )) {
         return;
     }
 
-    window.open("https://zalo.me/" + zaloPhone, "_blank");
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(content)
-            .then(() => {
-                alert("Đã sao chép nội dung cảnh báo. Cụ hãy dán vào Zalo rồi bấm Gửi.");
-            })
-            .catch(() => {
-                prompt("Cụ hãy sao chép nội dung này để gửi qua Zalo:", content);
-            });
-    } else {
-        prompt("Cụ hãy sao chép nội dung này để gửi qua Zalo:", content);
-    }
+    openZaloChat(phone, content);
 }
 
 
@@ -3496,57 +4443,16 @@ async function sendAlertBySms(level, encodedAdvice) {
     const agreed = confirm(
         "GỬI CẢNH BÁO CHO CON CHÁU\n\n" +
         "Số điện thoại: " + recipient + "\n\n" +
-        "SafeAI sẽ sao chép nội dung cảnh báo và mở Zalo.\n" +
+        "SafeAI sẽ sao chép nội dung cảnh báo và mở đúng cuộc trò chuyện Zalo.\n" +
         "Cụ đồng ý tiếp tục chứ?"
     );
 
     if (!agreed) return;
 
-    // Mở cửa sổ ngay khi cụ xác nhận để giảm nguy cơ
-    // trình duyệt chặn cửa sổ bật lên.
-    const zaloWindow = window.open("about:blank", "_blank");
+    // Sao chép nội dung rồi mở đúng cửa sổ trò chuyện Zalo với người nhận.
+    const copied = openZaloChat(recipient, message);
 
-    if (!zaloWindow) {
-        alert(
-            "Trình duyệt đang chặn Zalo.\n" +
-            "Cụ vui lòng cho phép mở cửa sổ mới rồi thử lại nhé."
-        );
-        return;
-    }
-
-    // Chuẩn hóa số điện thoại Việt Nam.
-    let cleanPhone = recipient.replace(/\D/g, "");
-
-    if (cleanPhone.startsWith("0084")) {
-        cleanPhone = "0" + cleanPhone.slice(4);
-    } else if (cleanPhone.startsWith("84")) {
-        cleanPhone = "0" + cleanPhone.slice(2);
-    }
-
-    let copied = false;
-
-    // Sao chép trước khi chuyển cửa sổ sang Zalo.
-    try {
-        await navigator.clipboard.writeText(message);
-        copied = true;
-    } catch (error) {
-        console.warn("Không thể tự sao chép nội dung:", error);
-    }
-
-    // Mở liên kết Zalo theo số người nhận.
-    zaloWindow.location.href = "https://zalo.me/" + cleanPhone;
-
-    if (copied) {
-        setTimeout(() => {
-            alert(
-                "ĐÃ CHUẨN BỊ NỘI DUNG CẢNH BÁO!\n\n" +
-                "1. Trong Zalo, mở cuộc trò chuyện với con/cháu.\n" +
-                "2. Nhấn vào ô soạn tin và chọn DÁN.\n" +
-                "3. Nhấn GỬI.\n\n" +
-                "Nội dung đã được sao chép sẵn."
-            );
-        }, 1000);
-    } else {
+    if (!copied) {
         prompt(
             "Cụ hãy sao chép nội dung dưới đây để gửi trong Zalo:",
             message
@@ -3761,7 +4667,9 @@ async function sendAlertBySms(level, encodedAdvice) {
                                     onclick="sendAlertBySms('RED', '${encodedReply.replace(/'/g, "%27")}')">
                                     <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
                                 </button>
+                                ${verifyCallMarkup(encodedReply)}
                             </div>
+                            ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "red", imageSource)}
                         </div>
                     `;
                 } else if (alertLevel === "orange") {
@@ -3782,7 +4690,9 @@ async function sendAlertBySms(level, encodedAdvice) {
                                     <i class="fa-solid fa-comment-sms"></i> Báo con cháu qua zalo
 
                                 </button>
+                                ${verifyCallMarkup(encodedReply)}
                             </div>
+                            ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "orange", imageSource)}
                         </div>
                     `;
                 } else {
@@ -3796,6 +4706,7 @@ async function sendAlertBySms(level, encodedAdvice) {
                             <button class="speak-btn" onclick="speakText('${encodedReply}')">
                                 <i class="fa-solid fa-volume-high"></i> Nghe lại lời khuyên
                             </button>
+                            ${feedbackMarkup(savedDiaryEntry ? savedDiaryEntry.id : "", "green", imageSource)}
                         </div>
                     `;
                 }
@@ -3814,6 +4725,7 @@ async function sendAlertBySms(level, encodedAdvice) {
     }
     /* 8. HỒ SƠ CỦA CỤ */
     async function openProfile() {
+        closeAdvancedTools();
         const accountPhone = currentUserPhone;
 
         if (!accountPhone) {
