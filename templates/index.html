@@ -3972,14 +3972,18 @@ function mergeTranscript(baseText, newText) {
 
 const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
+const useMobileSpeechMode =
+    /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
 
     recognition.lang = "vi-VN";
 
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    // Một số trình duyệt di động phát lại transcript tạm sau mỗi lần cập nhật.
+    // Chỉ nhận kết quả cuối trên điện thoại để tránh nối các bản nháp lặp nhau.
+    recognition.continuous = !useMobileSpeechMode;
+    recognition.interimResults = !useMobileSpeechMode;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = function () {
@@ -4016,7 +4020,7 @@ if (SpeechRecognition) {
 
             if (result.isFinal) {
                 currentFinal += result[0].transcript;
-            } else {
+            } else if (!useMobileSpeechMode) {
                 currentInterim += result[0].transcript;
             }
         }
