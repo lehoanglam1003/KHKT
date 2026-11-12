@@ -310,8 +310,22 @@ def normalize_lookup_url(value):
 def login_required(handler):
     @wraps(handler)
     def wrapped(*args, **kwargs):
-        if not session.get("user_phone"):
+        user_phone = session.get("user_phone")
+        if not user_phone:
             return jsonify({"error": "Vui lòng đăng nhập lại.", "code": "unauthorized"}), 401
+        with get_db() as connection:
+            account_exists = connection.execute(
+                "SELECT 1 FROM users WHERE phone = ?", (user_phone,)
+            ).fetchone()
+        if not account_exists:
+            # Phiên đăng nhập còn hạn nhưng tài khoản không còn trong CSDL (ví dụ máy chủ
+            # vừa tạo lại CSDL). Xoá phiên để người dùng đăng nhập lại, thay vì để mọi
+            # thao tác phía sau báo lỗi khó hiểu.
+            session.clear()
+            return jsonify({
+                "error": "Phiên đăng nhập đã hết hiệu lực. Cụ vui lòng đăng nhập lại.",
+                "code": "unauthorized",
+            }), 401
         return handler(*args, **kwargs)
     return wrapped
 
@@ -1472,19 +1486,26 @@ def record_guardian_alert(owner_phone, level, summary, source_excerpt):
     if level not in ("red", "orange"):
         return None
     now = int(time.time())
-    with get_db() as connection:
-        recent = connection.execute(
-            "SELECT 1 FROM guardian_alerts WHERE owner_phone = ? AND level = ? AND created_at > ? LIMIT 1",
-            (owner_phone, level, now - GUARDIAN_DEDUPE_SECONDS),
-        ).fetchone()
-        if recent:
-            return None
-        alert_id = secrets.token_urlsafe(12)
-        connection.execute(
-            "INSERT INTO guardian_alerts (id, owner_phone, level, summary, source_excerpt, created_at, acknowledged) VALUES (?, ?, ?, ?, ?, ?, 0)",
-            (alert_id, owner_phone, level, str(summary or "")[:500], str(source_excerpt or "")[:500], now),
-        )
-    return alert_id
+    try:
+        with get_db() as connection:
+            recent = connection.execute(
+                "SELECT 1 FROM guardian_alerts WHERE owner_phone = ? AND level = ? AND created_at > ? LIMIT 1",
+                (owner_phone, level, now - GUARDIAN_DEDUPE_SECONDS),
+            ).fetchone()
+            if recent:
+                return None
+            alert_id = secrets.token_urlsafe(12)
+            connection.execute(
+                "INSERT INTO guardian_alerts (id, owner_phone, level, summary, source_excerpt, created_at, acknowledged) VALUES (?, ?, ?, ?, ?, ?, 0)",
+                (alert_id, owner_phone, level, str(summary or "")[:500], str(source_excerpt or "")[:500], now),
+            )
+        return alert_id
+    except sqlite3.Error as error:
+        # Cảnh báo giám hộ là tính năng phụ. Nếu ghi lỗi (ví dụ tài khoản không còn
+        # trong CSDL sau khi máy chủ tạo lại CSDL) thì bỏ qua, không được làm hỏng
+        # kết quả phân tích mà người dùng đang chờ.
+        print(f"Guardian alert skipped: {type(error).__name__}")
+        return None
 
 
 def guardian_alert_to_dict(row):

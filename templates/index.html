@@ -1641,7 +1641,7 @@
         <div class="input-wrapper">
             <textarea id="userInput" placeholder="Nhập hoặc nhấn mic để nói..."></textarea>
             
-            <input type="file" id="imageInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event)">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
             
             <button class="mic-btn" id="imgBtn" style="right: 64px;" onclick="document.getElementById('imageInput').click()" title="Chụp hoặc tải ảnh" aria-label="Chụp hoặc tải ảnh">
                 <i class="fa-solid fa-image"></i>
@@ -4477,20 +4477,20 @@ async function sendAlertBySms(level, encodedAdvice) {
     }
 
     async function prepareImage(file) {
-        if (file.size > 15 * 1024 * 1024) {
-            throw new Error("Ảnh quá lớn. Cụ hãy chọn ảnh dưới 15 MB nhé.");
-        }
-
         if (window.createImageBitmap) {
             try {
                 const bitmap = await createImageBitmap(file);
-                const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+                // Giữ ảnh ở 2048 px để chữ nhỏ trong ảnh chụp màn hình còn đọc được.
+                const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
                 const canvas = document.createElement("canvas");
                 canvas.width = Math.max(1, Math.round(bitmap.width * scale));
                 canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-                canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                const context = canvas.getContext("2d");
+                context.imageSmoothingEnabled = true;
+                context.imageSmoothingQuality = "high";
+                context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
                 bitmap.close();
-                return canvas.toDataURL("image/jpeg", 0.84);
+                return canvas.toDataURL("image/jpeg", 0.9);
             } catch (error) {
                 console.warn("Không thể nén ảnh trên thiết bị:", error);
             }
