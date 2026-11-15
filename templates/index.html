@@ -998,6 +998,15 @@
         .feedback-row .mini-btn { flex: 1 1 42%; }
         .feedback-row span { font-size: 14px; color: #475569; }
         .feedback-thanks { font-size: 14px; color: #15803D; font-weight: 600; }
+        .guide-steps { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+        .guide-steps li { font-size: 17px; line-height: 1.5; color: #1E293B; }
+        .guide-tip {
+            margin: 12px 0 0; padding: 10px 12px; border-left: 4px solid #0EA5E9;
+            background: #F0F9FF; color: #0C4A6E; font-size: 16px; line-height: 1.5;
+        }
+        .guide-tip:first-of-type { margin-top: 6px; }
+        .guide-dont-show { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 16px; color: #334155; }
+        .guide-dont-show input { width: 22px; height: 22px; flex: 0 0 auto; }
         .lock-banner {
             display: none; align-items: center; gap: 8px; padding: 9px 14px;
             background: #FEF3C7; border-bottom: 1px solid #FCD34D; color: #92400E; font-size: 14px;
@@ -1428,6 +1437,7 @@
 
         <h3 class="tools-group-title">Học &amp; xử lý sự cố</h3>
         <div class="advanced-tools-list">
+            <button class="training-choice advanced-tool-button" type="button" onclick="openGuide()"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</button>
             <button class="training-choice advanced-tool-button" type="button" onclick="openTraining()"><i class="fa-solid fa-graduation-cap"></i> Luyện tập nhận biết lừa đảo</button>
             <button class="training-choice advanced-tool-button" type="button" onclick="openDiary()"><i class="fa-solid fa-book-open"></i> Nhật ký xử lý</button>
         </div>
@@ -1443,6 +1453,41 @@
         <div class="advanced-tools-list">
             <button class="training-choice advanced-tool-button" type="button" onclick="openSettings()"><i class="fa-solid fa-sliders"></i> Giọng đọc theo vùng miền &amp; rảnh tay</button>
         </div>
+    </section>
+</div>
+
+<div id="guide-modal" class="feature-modal" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <section class="feature-panel">
+        <div class="feature-heading">
+            <h2 id="guide-title"><i class="fa-solid fa-circle-question"></i> Hướng dẫn sử dụng</h2>
+            <button class="feature-close" type="button" onclick="closeGuide()" aria-label="Đóng">&times;</button>
+        </div>
+        <p class="advanced-tools-note">Chào Cụ! SafeAI giúp Cụ kiểm tra tin nhắn, đường link và ảnh xem có dấu hiệu lừa đảo hay không. Cụ làm theo ba bước dưới đây là dùng được ngay.</p>
+
+        <h3 class="tools-group-title">Ba bước kiểm tra</h3>
+        <ol class="guide-steps">
+            <li>Dán tin nhắn nghi ngờ vào ô <b>Nhập hoặc nhấn mic để nói...</b>. Hoặc bấm nút <b>micro</b> rồi đọc to nội dung, SafeAI sẽ tự ghi lại giúp Cụ.</li>
+            <li>Bấm nút <b>KIỂM TRA NGAY</b> ở dưới cùng rồi chờ vài giây.</li>
+            <li>Đọc kết quả trả về: <b>đỏ</b> là rất nguy hiểm, <b>cam</b> là cần cảnh giác, <b>xanh</b> là chưa thấy dấu hiệu xấu.</li>
+        </ol>
+
+        <h3 class="tools-group-title">Kiểm tra ảnh chụp màn hình</h3>
+        <p class="guide-tip">Bấm nút <b>ảnh</b> nằm bên trái nút micro, rồi chọn ảnh chụp màn hình tin nhắn nghi ngờ. SafeAI sẽ đọc chữ trong ảnh và đánh giá giúp Cụ.</p>
+
+        <h3 class="tools-group-title">Khi kết quả báo nguy hiểm</h3>
+        <p class="guide-tip">Bấm <b>Gọi xác minh với con</b> trên thẻ kết quả để mở Zalo nhắn cho người thân mà Cụ đã lưu. Nếu cần gọi gấp, bấm nút <b>SOS</b> ở góc trên bên phải.</p>
+        <p class="guide-tip">Cụ tuyệt đối <b>không chuyển tiền</b> và <b>không đọc mã OTP</b> cho bất kỳ ai, kể cả người tự xưng là công an hay nhân viên ngân hàng.</p>
+
+        <h3 class="tools-group-title">Các nút ở thanh trên</h3>
+        <p class="guide-tip"><b>Hồ sơ</b>: lưu số điện thoại con cháu. <b>Khóa</b>: tạm khoá 30 phút để Cụ có thời gian suy nghĩ. <b>Công cụ</b>: tra cứu link, danh bạ đáng tin, lịch sử lừa đảo, luyện tập và cài đặt giọng đọc.</p>
+
+        <div class="tools-actions">
+            <button class="training-choice" type="button" onclick="closeGuide()"><i class="fa-solid fa-check"></i> Đã hiểu, bắt đầu</button>
+        </div>
+        <label class="guide-dont-show">
+            <input type="checkbox" id="guide-dont-show">
+            <span>Không hiện lại hướng dẫn này mỗi lần đăng nhập</span>
+        </label>
     </section>
 </div>
 
@@ -1806,6 +1851,7 @@
         }
         await loadSettings();
         await refreshSafetyLock();
+        maybeShowGuide();
     }
 
     async function migrateLegacyDiary(phone) {
@@ -1875,6 +1921,7 @@
         handsFreeEnabled = false;
         safetyLockState = { active: false, lockedUntil: 0, secondsRemaining: 0, reason: "" };
         renderSafetyLock();
+        closeGuide();
         closeProfile();
         closeDiary();
         document.getElementById("login-screen").style.display = "flex";
@@ -2616,6 +2663,36 @@
             isVoiceCaptureRequested = true;
             startVoiceRecognitionSegment();
         }, 700);
+    }
+
+    /* ---------- Hướng dẫn sử dụng ---------- */
+    function guideSeenKey() {
+        return "safeai_guide_seen_" + (currentUserPhone || "guest");
+    }
+
+    function openGuide() {
+        const checkbox = document.getElementById("guide-dont-show");
+        if (checkbox) checkbox.checked = false;
+        document.getElementById("guide-modal").style.display = "flex";
+    }
+
+    function closeGuide() {
+        const checkbox = document.getElementById("guide-dont-show");
+        try {
+            if (checkbox && checkbox.checked) localStorage.setItem(guideSeenKey(), "1");
+        } catch (error) {
+            console.warn("Không lưu được lựa chọn hướng dẫn:", error);
+        }
+        document.getElementById("guide-modal").style.display = "none";
+    }
+
+    function maybeShowGuide() {
+        try {
+            if (localStorage.getItem(guideSeenKey())) return;
+        } catch (error) {
+            console.warn("Không đọc được lựa chọn hướng dẫn:", error);
+        }
+        openGuide();
     }
 
     /* ---------- Nút "Gọi xác minh với con" & phản hồi đúng/sai ---------- */
